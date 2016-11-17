@@ -16,6 +16,7 @@ package compat
 
 import (
 	goerrors "errors"
+	"fmt"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/projectcalico/libcalico-go/lib/backend/api"
@@ -173,6 +174,23 @@ func (c *ModelAdaptor) Delete(d *model.KVPair) error {
 			return err
 		}
 		return nil
+	case model.IPPoolKey:
+		//u, err := disableIPPool(d)
+		ipkvp, err := c.client.Get(d.Key)
+		if err != nil {
+			return err
+		}
+		ipkvp.Value.(*model.IPPool).Disabled = true
+		u, err := c.client.Update(ipkvp)
+
+		fmt.Println("############## ", u.Value.(*model.IPPool).Disabled)
+		if err != nil {
+			return err
+		}
+		// if err = c.client.Delete(d); err != nil {
+		// 	return err
+		// }
+		return nil
 	default:
 		return c.client.Delete(d)
 	}
@@ -187,6 +205,8 @@ func (c *ModelAdaptor) Get(k model.Key) (*model.KVPair, error) {
 		return c.getNode(kt)
 	case model.BlockKey:
 		return c.getBlock(k)
+	case model.IPPoolKey:
+		return c.getNonDisabledIPPools(k)
 	default:
 		return c.client.Get(k)
 	}
@@ -200,6 +220,8 @@ func (c *ModelAdaptor) List(l model.ListInterface) ([]*model.KVPair, error) {
 		return c.listNodes(lt)
 	case model.BlockListOptions:
 		return c.listBlock(lt)
+	case model.IPPoolListOptions:
+		return c.listNonDisabledIPPools(lt)
 	default:
 		return c.client.List(l)
 	}
@@ -234,6 +256,41 @@ func (c *ModelAdaptor) getProfile(k model.Key) (*model.KVPair, error) {
 		p.Rules = *r.Value.(*model.ProfileRules)
 	}
 	return &d, nil
+}
+
+func (c *ModelAdaptor) getNonDisabledIPPools(k model.Key) (*model.KVPair, error) {
+	pk := k.(model.IPPoolKey)
+	v, err := c.client.Get(model.IPPoolKey{CIDR: pk.CIDR})
+	if err != nil {
+		return nil, err
+	}
+	if v.Value.(*model.IPPool).Disabled {
+		return nil, goerrors.New("Requested IPPool is disabled")
+	}
+	return v, nil
+}
+
+func (c *ModelAdaptor) listNonDisabledIPPools(ipl model.IPPoolListOptions) ([]*model.KVPair, error) {
+	ipPoolList, err := c.client.List(ipl)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create an empty slice of KVPair.
+	results := make([]*model.KVPair, len(ipPoolList))
+
+	// Go through the list to make sure Affinity field has a proper value,
+	// and maps the value to Affinity if the deprecated HostAffinity field is used
+	// by calling ensureBlockAffinity, and populate the KVPair slice to return.
+	for i, ipkv := range ipPoolList {
+		if ipkv.Value.(*model.IPPool).Disabled {
+			continue
+		}
+		results[i] = ipkv
+	}
+
+	return results, nil
+
 }
 
 // getBlock gets KVPair for Block. It gets the block value first,

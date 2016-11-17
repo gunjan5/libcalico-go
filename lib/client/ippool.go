@@ -69,6 +69,13 @@ func (h *ipPools) Apply(a *api.IPPool) (*api.IPPool, error) {
 
 // Delete deletes an existing IP pool.
 func (h *ipPools) Delete(metadata api.IPPoolMetadata) error {
+	//Get
+	//h.Get()
+	//disable = true
+	//update
+	//release
+	//h.c.IPAM().ReleasePoolAffinities
+	//delete
 	return h.c.delete(metadata, h)
 }
 

@@ -76,6 +76,7 @@ import (
 
 	. "github.com/onsi/ginkgo/extensions/table"
 
+	logr "github.com/Sirupsen/logrus"
 	"github.com/projectcalico/libcalico-go/lib/api"
 	"github.com/projectcalico/libcalico-go/lib/backend/etcd"
 	"github.com/projectcalico/libcalico-go/lib/client"
@@ -103,137 +104,198 @@ type testArgsClaimAff struct {
 
 var _ = Describe("IPAM tests", func() {
 
-	Describe("IPAM AutoAssign from any pool", func() {
-		testutils.CleanEtcd()
-		c, _ := testutils.NewClient("")
-		ic := setupIPAMClient(true)
+	// Describe("IPAM AutoAssign from any pool", func() {
+	// 	testutils.CleanEtcd()
+	// 	c, _ := testutils.NewClient("")
+	// 	ic := setupIPAMClient(true)
 
-		testutils.CreateNewIPPool(*c, "10.0.0.0/24", false, false, true)
-		testutils.CreateNewIPPool(*c, "20.0.0.0/24", false, false, true)
+	// 	testutils.CreateNewIPPool(*c, "10.0.0.0/24", false, false, true)
+	// 	testutils.CreateNewIPPool(*c, "20.0.0.0/24", false, false, true)
 
-		// Assign an IP address, don't pass a pool, make sure we can get an
-		// address.
-		Context("AutoAssign 1 IP from any pool", func() {
-			args := client.AutoAssignArgs{
-				Num4:     1,
-				Num6:     0,
-				Hostname: "test-host",
-			}
-			// Call once in order to assign an IP address and create a block.
-			v4, _, outErr := ic.AutoAssign(args)
-			It("should have assigned an IP address with no error", func() {
-				Expect(outErr).NotTo(HaveOccurred())
-				Expect(len(v4) == 1).To(BeTrue())
-			})
+	// 	// Assign an IP address, don't pass a pool, make sure we can get an
+	// 	// address.
+	// 	Context("AutoAssign 1 IP from any pool", func() {
+	// 		args := client.AutoAssignArgs{
+	// 			Num4:     1,
+	// 			Num6:     0,
+	// 			Hostname: "test-host",
+	// 		}
+	// 		// Call once in order to assign an IP address and create a block.
+	// 		v4, _, outErr := ic.AutoAssign(args)
+	// 		It("should have assigned an IP address with no error", func() {
+	// 			Expect(outErr).NotTo(HaveOccurred())
+	// 			Expect(len(v4) == 1).To(BeTrue())
+	// 		})
 
-			// Call again to trigger an assignment from the newly created block.
-			v4, _, outErr = ic.AutoAssign(args)
-			It("should have assigned an IP address with no error", func() {
-				Expect(outErr).NotTo(HaveOccurred())
-				Expect(len(v4) == 1).To(BeTrue())
-			})
-		})
-	})
+	// 		// Call again to trigger an assignment from the newly created block.
+	// 		v4, _, outErr = ic.AutoAssign(args)
+	// 		It("should have assigned an IP address with no error", func() {
+	// 			Expect(outErr).NotTo(HaveOccurred())
+	// 			Expect(len(v4) == 1).To(BeTrue())
+	// 		})
+	// 	})
+	// })
 
-	Describe("IPAM AutoAssign from different pools", func() {
+	FDescribe("IPAM AutoAssign from the default pool then delete the pool and assign again", func() {
+		logr.SetLevel(logr.DebugLevel)
 		testutils.CleanEtcd()
 		c, _ := testutils.NewClient("")
 		ic := setupIPAMClient(true)
 
 		host := "host-A"
 		pool1 := testutils.MustParseCIDR("10.0.0.0/24")
-		pool2 := testutils.MustParseCIDR("20.0.0.0/24")
-		var block1, block2 cnet.IPNet
 
 		testutils.CreateNewIPPool(*c, "10.0.0.0/24", false, false, true)
-		testutils.CreateNewIPPool(*c, "20.0.0.0/24", false, false, true)
 
-		// Step-1: AutoAssign 1 IP from pool1 - expect that the IP is from pool1.
-		Context("AutoAssign 1 IP from pool1", func() {
+		// Step-1: AutoAssign 1 IP without specifying a pool - expect the assigned IP is from pool1.
+		Context("AutoAssign 1 IP without specifying a pool", func() {
 			args := client.AutoAssignArgs{
 				Num4:     1,
 				Num6:     0,
 				Hostname: host,
-				IPv4Pool: &pool1,
 			}
 
 			v4, _, outErr := ic.AutoAssign(args)
 
-			blocks := getAffineBlocks(host)
-
-			for _, b := range blocks {
-				if pool1.Contains(b.IPNet.IP) {
-					block1 = b
-				}
-			}
-
-			It("should be from pool1", func() {
+			It("assigned IP should be from pool1", func() {
 				Expect(outErr).NotTo(HaveOccurred())
 				Expect(pool1.IPNet.Contains(v4[0].IP)).To(BeTrue())
 			})
 		})
 
-		// Step-2: AutoAssign 1 IP from pool2 - expect that the IP is from pool2.
-		Context("AutoAssign 1 IP from pool2", func() {
-			args := client.AutoAssignArgs{
-				Num4:     1,
-				Num6:     0,
-				Hostname: host,
-				IPv4Pool: &pool2,
-			}
+		// Step-2: Delete pool1 - expect it to execute without any error.
+		Context("Delete pool1", func() {
+			outErr := c.IPPools().Delete(api.IPPoolMetadata{
+				CIDR: pool1,
+			})
 
-			v4, _, outErr := ic.AutoAssign(args)
+			ic.ReleasePoolAffinities(pool1)
 
-			blocks := getAffineBlocks(host)
-
-			for _, b := range blocks {
-				if pool2.Contains(b.IPNet.IP) {
-					block2 = b
-				}
-			}
-
-			It("should be from pool2", func() {
+			It("should delete the ipPool without any error", func() {
 				Expect(outErr).NotTo(HaveOccurred())
-				Expect(block2.IPNet.Contains(v4[0].IP)).To(BeTrue())
 			})
 		})
 
-		// Step-3: AutoAssign 1 IP from pool1 (second time) - expect that the
-		// IP is from from the same block as the first IP from pool1.
-		Context("AutoAssign 1 IP from pool1 (second time)", func() {
+		// Step-3: Create a new IP Pool.
+		pool2 := testutils.MustParseCIDR("20.0.0.0/24")
+		testutils.CreateNewIPPool(*c, "20.0.0.0/24", false, false, true)
+
+		// Step-4: AutoAssign 1 IP without specifying a pool - expect the assigned IP is from pool2.
+		Context("AutoAssign 1 IP without specifying a pool", func() {
 			args := client.AutoAssignArgs{
 				Num4:     1,
 				Num6:     0,
 				Hostname: host,
-				IPv4Pool: &pool1,
 			}
 
 			v4, _, outErr := ic.AutoAssign(args)
 
-			It("should be a from the same block as the first IP from pool1", func() {
+			It("assigned IP should be from pool2", func() {
 				Expect(outErr).NotTo(HaveOccurred())
-				Expect(block1.IPNet.Contains(v4[0].IP)).To(BeTrue())
-			})
-		})
-
-		// Step-4: AutoAssign 1 IP from pool2 (second time) - expect that the
-		// IP is from from the same block as the first IP from pool2.
-		Context("AutoAssign 1 IP from pool2 (second time)", func() {
-			args := client.AutoAssignArgs{
-				Num4:     1,
-				Num6:     0,
-				Hostname: host,
-				IPv4Pool: &pool2,
-			}
-
-			v4, _, outErr := ic.AutoAssign(args)
-
-			It("should be a from the same block as the first IP pool2", func() {
-				Expect(outErr).NotTo(HaveOccurred())
-				Expect(block2.IPNet.Contains(v4[0].IP)).To(BeTrue())
+				Expect(pool2.IPNet.Contains(v4[0].IP)).To(BeTrue())
 			})
 		})
 	})
+
+	// Describe("IPAM AutoAssign from different pools", func() {
+	// 	testutils.CleanEtcd()
+	// 	c, _ := testutils.NewClient("")
+	// 	ic := setupIPAMClient(true)
+
+	// 	host := "host-A"
+	// 	pool1 := testutils.MustParseCIDR("10.0.0.0/24")
+	// 	pool2 := testutils.MustParseCIDR("20.0.0.0/24")
+	// 	var block1, block2 cnet.IPNet
+
+	// 	testutils.CreateNewIPPool(*c, "10.0.0.0/24", false, false, true)
+	// 	testutils.CreateNewIPPool(*c, "20.0.0.0/24", false, false, true)
+
+	// 	// Step-1: AutoAssign 1 IP from pool1 - expect that the IP is from pool1.
+	// 	Context("AutoAssign 1 IP from pool1", func() {
+	// 		args := client.AutoAssignArgs{
+	// 			Num4:     1,
+	// 			Num6:     0,
+	// 			Hostname: host,
+	// 			IPv4Pool: &pool1,
+	// 		}
+
+	// 		v4, _, outErr := ic.AutoAssign(args)
+
+	// 		blocks := getAffineBlocks(host)
+
+	// 		for _, b := range blocks {
+	// 			if pool1.Contains(b.IPNet.IP) {
+	// 				block1 = b
+	// 			}
+	// 		}
+
+	// 		It("should be from pool1", func() {
+	// 			Expect(outErr).NotTo(HaveOccurred())
+	// 			Expect(pool1.IPNet.Contains(v4[0].IP)).To(BeTrue())
+	// 		})
+	// 	})
+
+	// 	// Step-2: AutoAssign 1 IP from pool2 - expect that the IP is from pool2.
+	// 	Context("AutoAssign 1 IP from pool2", func() {
+	// 		args := client.AutoAssignArgs{
+	// 			Num4:     1,
+	// 			Num6:     0,
+	// 			Hostname: host,
+	// 			IPv4Pool: &pool2,
+	// 		}
+
+	// 		v4, _, outErr := ic.AutoAssign(args)
+
+	// 		blocks := getAffineBlocks(host)
+
+	// 		for _, b := range blocks {
+	// 			if pool2.Contains(b.IPNet.IP) {
+	// 				block2 = b
+	// 			}
+	// 		}
+
+	// 		It("should be from pool2", func() {
+	// 			Expect(outErr).NotTo(HaveOccurred())
+	// 			Expect(block2.IPNet.Contains(v4[0].IP)).To(BeTrue())
+	// 		})
+	// 	})
+
+	// 	// Step-3: AutoAssign 1 IP from pool1 (second time) - expect that the
+	// 	// IP is from from the same block as the first IP from pool1.
+	// 	Context("AutoAssign 1 IP from pool1 (second time)", func() {
+	// 		args := client.AutoAssignArgs{
+	// 			Num4:     1,
+	// 			Num6:     0,
+	// 			Hostname: host,
+	// 			IPv4Pool: &pool1,
+	// 		}
+
+	// 		v4, _, outErr := ic.AutoAssign(args)
+
+	// 		It("should be a from the same block as the first IP from pool1", func() {
+	// 			Expect(outErr).NotTo(HaveOccurred())
+	// 			Expect(block1.IPNet.Contains(v4[0].IP)).To(BeTrue())
+	// 		})
+	// 	})
+
+	// 	// Step-4: AutoAssign 1 IP from pool2 (second time) - expect that the
+	// 	// IP is from from the same block as the first IP from pool2.
+	// 	Context("AutoAssign 1 IP from pool2 (second time)", func() {
+	// 		args := client.AutoAssignArgs{
+	// 			Num4:     1,
+	// 			Num6:     0,
+	// 			Hostname: host,
+	// 			IPv4Pool: &pool2,
+	// 		}
+
+	// 		v4, _, outErr := ic.AutoAssign(args)
+
+	// 		It("should be a from the same block as the first IP pool2", func() {
+	// 			Expect(outErr).NotTo(HaveOccurred())
+	// 			Expect(block2.IPNet.Contains(v4[0].IP)).To(BeTrue())
+	// 		})
+	// 	})
+	// })
 
 	DescribeTable("AutoAssign: requested IPs vs returned IPs",
 		func(host string, cleanEnv bool, pool []string, usePool string, inv4, inv6, expv4, expv6 int, expError error) {
