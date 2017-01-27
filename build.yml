@@ -1,0 +1,16 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source: {repository: calico/go-build}
+
+inputs:
+- name: libcalico-go
+
+run:
+  path: ./libcalico-go/make ut
+
+image_resource:
+  type: docker-image
+  source:
+    repository: calico/go-build
