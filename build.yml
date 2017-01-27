@@ -8,7 +8,7 @@ inputs:
 - name: libcalico-go
 
 run:
-  path: ./libcalico-go/make ut
+  path: ./libcalico-go/run-uts
 
 image_resource:
   type: docker-image

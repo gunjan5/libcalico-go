@@ -2,6 +2,8 @@
 
 set -e
 
+glide up -v
+
 # Run tests in random order find tests recursively (-r).
 echo $WHAT
 ginkgo -cover -r --skipPackage vendor $WHAT
