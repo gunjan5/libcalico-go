@@ -25,8 +25,8 @@ import (
 	"github.com/projectcalico/libcalico-go/lib/net"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
+	extensions "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
 	k8sapi "k8s.io/client-go/pkg/api/v1"
-	extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
 type testWatch struct {

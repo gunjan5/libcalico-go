@@ -33,8 +33,8 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	networking "k8s.io/client-go/kubernetes/typed/networking/v1"
 	k8sapi "k8s.io/client-go/pkg/api/v1"
-	extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
 var (
@@ -398,21 +398,21 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 	})
 
 	It("should handle a basic NetworkPolicy", func() {
-		np := extensions.NetworkPolicy{
+		np := networking..NetworkPolicy{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-syncer-basic-net-policy",
 			},
-			Spec: extensions.NetworkPolicySpec{
+			Spec: networking.NetworkPolicySpec{
 				PodSelector: metav1.LabelSelector{
 					MatchLabels: map[string]string{"label": "value"},
 				},
-				Ingress: []extensions.NetworkPolicyIngressRule{
-					extensions.NetworkPolicyIngressRule{
-						Ports: []extensions.NetworkPolicyPort{
-							extensions.NetworkPolicyPort{},
+				Ingress: []networking.NetworkPolicyIngressRule{
+					networking.NetworkPolicyIngressRule{
+						Ports: []networking.NetworkPolicyPort{
+							networking.NetworkPolicyPort{},
 						},
-						From: []extensions.NetworkPolicyPeer{
-							extensions.NetworkPolicyPeer{
+						From: []networking.NetworkPolicyPeer{
+							networking.NetworkPolicyPeer{
 								PodSelector: &metav1.LabelSelector{
 									MatchLabels: map[string]string{
 										"k": "v",

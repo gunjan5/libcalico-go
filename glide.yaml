@@ -25,7 +25,7 @@ import:
 - package: golang.org/x/text
   version: 19e51611da83d6be54ddafce4a4af510cb3e9ea4
 - package: k8s.io/client-go
-  version: 4a3ab2f5be5177366f8206fd79ce55ca80e417fa
+  version: 59eef07b24b219d287624b7f52ea339ac3e145fc
   subpackages:
   - kubernetes
   - pkg/api
