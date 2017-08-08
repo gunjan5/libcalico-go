@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/projectcalico/libcalico-go/lib/backend/k8s/thirdparty"
+	"github.com/projectcalico/libcalico-go/lib/backend/k8s/custom"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,19 +28,19 @@ import (
 )
 
 const (
-	GlobalConfigResourceName = "globalconfigs"
-	GlobalConfigTPRName      = "global-config.projectcalico.org"
+	GlobalConfigResourceName = "GlobalConfigs"
+	GlobalConfigCRDName      = "globalconfigs.crd.projectcalico.org"
 )
 
 func NewGlobalConfigClient(c *kubernetes.Clientset, r *rest.RESTClient) K8sResourceClient {
 	return &customK8sResourceClient{
 		clientSet:       c,
 		restClient:      r,
-		name:            GlobalConfigTPRName,
+		name:            GlobalConfigCRDName,
 		resource:        GlobalConfigResourceName,
 		description:     "Calico Global Configuration",
-		k8sResourceType: reflect.TypeOf(thirdparty.GlobalConfig{}),
-		k8sListType:     reflect.TypeOf(thirdparty.GlobalConfigList{}),
+		k8sResourceType: reflect.TypeOf(custom.GlobalConfig{}),
+		k8sListType:     reflect.TypeOf(custom.GlobalConfigList{}),
 		converter:       GlobalConfigConverter{},
 	}
 }
@@ -66,7 +66,7 @@ func (_ GlobalConfigConverter) NameToKey(name string) (model.Key, error) {
 }
 
 func (c GlobalConfigConverter) ToKVPair(r CustomK8sResource) (*model.KVPair, error) {
-	t := r.(*thirdparty.GlobalConfig)
+	t := r.(*custom.GlobalConfig)
 	return &model.KVPair{
 		Key: model.GlobalConfigKey{
 			Name: t.Spec.Name,
@@ -81,17 +81,17 @@ func (c GlobalConfigConverter) FromKVPair(kvp *model.KVPair) (CustomK8sResource,
 	if err != nil {
 		return nil, err
 	}
-	tpr := thirdparty.GlobalConfig{
+	crd := custom.GlobalConfig{
 		Metadata: metav1.ObjectMeta{
 			Name: name,
 		},
-		Spec: thirdparty.GlobalConfigSpec{
+		Spec: custom.GlobalConfigSpec{
 			Name:  kvp.Key.(model.GlobalConfigKey).Name,
 			Value: kvp.Value.(string),
 		},
 	}
 	if kvp.Revision != nil {
-		tpr.Metadata.ResourceVersion = kvp.Revision.(string)
+		crd.Metadata.ResourceVersion = kvp.Revision.(string)
 	}
-	return &tpr, nil
+	return &crd, nil
 }

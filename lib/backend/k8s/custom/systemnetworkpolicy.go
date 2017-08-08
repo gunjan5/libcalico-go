@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package thirdparty
+package custom
 
 import (
 	"encoding/json"
@@ -22,38 +22,38 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// GlobalBgpPeer is the ThirdPartyResource definition of a Calico Global BGP Peer resource in
+// SystemNetworkPolicy is the CustomResourceDefinition of a Calico Policy resource in
 // the Kubernetes API.
-type GlobalBgpPeer struct {
+type SystemNetworkPolicy struct {
 	metav1.TypeMeta `json:",inline"`
 	Metadata        metav1.ObjectMeta `json:"metadata"`
-	Spec            api.BGPPeerSpec   `json:"spec"`
+	Spec            api.PolicySpec    `json:"spec"`
 }
 
-// GlobalBgpPeerList is a list of Calico Global BGP Peer resources.
-type GlobalBgpPeerList struct {
+// SystemNetworkPolicyList is a list of SystemNetworkPolicy resources.
+type SystemNetworkPolicyList struct {
 	metav1.TypeMeta `json:",inline"`
-	Metadata        metav1.ListMeta `json:"metadata"`
-	Items           []GlobalBgpPeer `json:"items"`
+	Metadata        metav1.ListMeta       `json:"metadata"`
+	Items           []SystemNetworkPolicy `json:"items"`
 }
 
 // GetObjectKind returns the kind of this object.  Required to satisfy Object interface
-func (e *GlobalBgpPeer) GetObjectKind() schema.ObjectKind {
+func (e *SystemNetworkPolicy) GetObjectKind() schema.ObjectKind {
 	return &e.TypeMeta
 }
 
-// GetObjectMeta returns the object metadata of this object. Required to satisfy ObjectMetaAccessor interface
-func (e *GlobalBgpPeer) GetObjectMeta() metav1.Object {
+// GetOjbectMeta returns the object metadata of this object. Required to satisfy ObjectMetaAccessor interface
+func (e *SystemNetworkPolicy) GetObjectMeta() metav1.Object {
 	return &e.Metadata
 }
 
 // GetObjectKind returns the kind of this object. Required to satisfy Object interface
-func (el *GlobalBgpPeerList) GetObjectKind() schema.ObjectKind {
+func (el *SystemNetworkPolicyList) GetObjectKind() schema.ObjectKind {
 	return &el.TypeMeta
 }
 
 // GetListMeta returns the list metadata of this object. Required to satisfy ListMetaAccessor interface
-func (el *GlobalBgpPeerList) GetListMeta() metav1.List {
+func (el *SystemNetworkPolicyList) GetListMeta() metav1.List {
 	return &el.Metadata
 }
 
@@ -61,27 +61,27 @@ func (el *GlobalBgpPeerList) GetListMeta() metav1.List {
 // resources and ugorji. If/when these issues are resolved, the code below
 // should no longer be required.
 
-type GlobalBgpPeerListCopy GlobalBgpPeerList
-type GlobalBgpPeerCopy GlobalBgpPeer
+type SystemNetworkPolicyListCopy SystemNetworkPolicyList
+type SystemNetworkPolicyCopy SystemNetworkPolicy
 
-func (g *GlobalBgpPeer) UnmarshalJSON(data []byte) error {
-	tmp := GlobalBgpPeerCopy{}
+func (g *SystemNetworkPolicy) UnmarshalJSON(data []byte) error {
+	tmp := SystemNetworkPolicyCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := GlobalBgpPeer(tmp)
+	tmp2 := SystemNetworkPolicy(tmp)
 	*g = tmp2
 	return nil
 }
 
-func (l *GlobalBgpPeerList) UnmarshalJSON(data []byte) error {
-	tmp := GlobalBgpPeerListCopy{}
+func (l *SystemNetworkPolicyList) UnmarshalJSON(data []byte) error {
+	tmp := SystemNetworkPolicyListCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := GlobalBgpPeerList(tmp)
+	tmp2 := SystemNetworkPolicyList(tmp)
 	*l = tmp2
 	return nil
 }

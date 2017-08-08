@@ -15,8 +15,9 @@
 package resources_test
 
 import (
+	"github.com/projectcalico/libcalico-go/lib/api"
+	"github.com/projectcalico/libcalico-go/lib/backend/k8s/custom"
 	"github.com/projectcalico/libcalico-go/lib/backend/k8s/resources"
-	"github.com/projectcalico/libcalico-go/lib/backend/k8s/thirdparty"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 	"github.com/projectcalico/libcalico-go/lib/net"
 
@@ -57,39 +58,33 @@ var _ = Describe("IP Pool conversion methods", func() {
 			Masquerade:    true,
 			IPIPMode:      "cross-subnet",
 			IPIPInterface: "tunl0",
+			Disabled:      false,
+			IPAM:          true,
 		},
 		Revision: "rv",
 	}
-	res1 := &thirdparty.IpPool{
+	res1 := &custom.IPPool{
 		Metadata: metav1.ObjectMeta{
 			Name:            name2,
 			ResourceVersion: "rv",
 		},
-		Spec: thirdparty.IpPoolSpec{
-			Value: "{\"cidr\":\"11:22::/120\",\"ipip\":\"tunl0\",\"ipip_mode\":\"cross-subnet\",\"masquerade\":true,\"ipam\":false,\"disabled\":false}",
+		Spec: api.IPPoolSpec{
+			IPIP: &api.IPIPConfiguration{
+				Enabled: true,
+				Mode:    "cross-subnet",
+			},
+			NATOutgoing: true,
+			Disabled:    false,
 		},
 	}
 
 	// Invalid Kubernetes resource, invalid name
-	resInvalidName := &thirdparty.IpPool{
+	resInvalidName := &custom.IPPool{
 		Metadata: metav1.ObjectMeta{
 			Name:            nameInvalid,
 			ResourceVersion: "test",
 		},
-		Spec: thirdparty.IpPoolSpec{
-			Value: "{}",
-		},
-	}
-
-	// Invalid Kubernetes resource, invalid value
-	resInvalidValue := &thirdparty.IpPool{
-		Metadata: metav1.ObjectMeta{
-			Name:            name1,
-			ResourceVersion: "test",
-		},
-		Spec: thirdparty.IpPoolSpec{
-			Value: "{",
-		},
+		Spec: api.IPPoolSpec{},
 	}
 
 	It("should convert an incomplete ListInterface to no Key", func() {
@@ -123,7 +118,7 @@ var _ = Describe("IP Pool conversion methods", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(r.GetObjectMeta().GetName()).To(Equal(res1.Metadata.Name))
 		Expect(r.GetObjectMeta().GetResourceVersion()).To(Equal(res1.Metadata.ResourceVersion))
-		Expect(r).To(BeAssignableToTypeOf(&thirdparty.IpPool{}))
+		Expect(r).To(BeAssignableToTypeOf(&custom.IPPool{}))
 	})
 
 	It("should convert between a Kuberenetes resource and the equivalent KVPair", func() {
@@ -137,11 +132,6 @@ var _ = Describe("IP Pool conversion methods", func() {
 
 	It("should fail to convert an invalid Kuberenetes resource (invalid name)", func() {
 		_, err := converter.ToKVPair(resInvalidName)
-		Expect(err).To(HaveOccurred())
-	})
-
-	It("should fail to convert an invalid Kuberenetes resource (invalid value)", func() {
-		_, err := converter.ToKVPair(resInvalidValue)
 		Expect(err).To(HaveOccurred())
 	})
 })
