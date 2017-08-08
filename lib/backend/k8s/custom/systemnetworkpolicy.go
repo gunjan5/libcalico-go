@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package thirdparty
+package custom
 
 import (
 	"encoding/json"
@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// SystemNetworkPolicy is the ThirdPartyResource definition of a Calico Policy resource in
+// SystemNetworkPolicy is the CustomResourceDefinition of a Calico Policy resource in
 // the Kubernetes API.
 type SystemNetworkPolicy struct {
 	metav1.TypeMeta `json:",inline"`

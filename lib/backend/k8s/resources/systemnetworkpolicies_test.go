@@ -17,7 +17,7 @@ package resources_test
 import (
 	"github.com/projectcalico/libcalico-go/lib/api"
 	"github.com/projectcalico/libcalico-go/lib/backend/k8s/resources"
-	"github.com/projectcalico/libcalico-go/lib/backend/k8s/thirdparty"
+	"github.com/projectcalico/libcalico-go/lib/backend/k8s/custom"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 	"github.com/projectcalico/libcalico-go/lib/numorstring"
 
@@ -75,7 +75,7 @@ var _ = Describe("System Network Policies conversion methods", func() {
 		Revision: "rv",
 	}
 
-	res1 := &thirdparty.SystemNetworkPolicy{
+	res1 := &custom.SystemNetworkPolicy{
 		Metadata: metav1.ObjectMeta{
 			Name:            name2,
 			ResourceVersion: "rv",
@@ -121,8 +121,8 @@ var _ = Describe("System Network Policies conversion methods", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(r.GetObjectMeta().GetName()).To(Equal(res1.Metadata.Name))
 			Expect(r.GetObjectMeta().GetResourceVersion()).To(Equal(res1.Metadata.ResourceVersion))
-			Expect(r).To(BeAssignableToTypeOf(&thirdparty.SystemNetworkPolicy{}))
-			Expect(r.(*thirdparty.SystemNetworkPolicy).Spec).To(Equal(res1.Spec))
+			Expect(r).To(BeAssignableToTypeOf(&custom.SystemNetworkPolicy{}))
+			Expect(r.(*custom.SystemNetworkPolicy).Spec).To(Equal(res1.Spec))
 		})
 
 		It("should convert between a Kuberenetes resource and the equivalent KVPair", func() {
@@ -165,8 +165,8 @@ var _ = Describe("System Network Policies conversion methods", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(r.GetObjectMeta().GetName()).To(Equal(res1.Metadata.Name))
 		Expect(r.GetObjectMeta().GetResourceVersion()).To(Equal(res1.Metadata.ResourceVersion))
-		Expect(r).To(BeAssignableToTypeOf(&thirdparty.SystemNetworkPolicy{}))
-		Expect(r.(*thirdparty.SystemNetworkPolicy).Spec).To(Equal(res1.Spec))
+		Expect(r).To(BeAssignableToTypeOf(&custom.SystemNetworkPolicy{}))
+		Expect(r.(*custom.SystemNetworkPolicy).Spec).To(Equal(res1.Spec))
 	})
 
 	It("should convert between a Kuberenetes resource and the equivalent KVPair", func() {

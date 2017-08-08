@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
-	extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/rest"
 )
 
@@ -95,7 +94,6 @@ func (c *customK8sResourceClient) Create(kvp *model.KVPair) (*model.KVPair, erro
 	resOut := reflect.New(c.k8sResourceType).Interface().(CustomK8sResource)
 	err = c.restClient.Post().
 		Resource(c.resource).
-		Namespace("kube-system").
 		Body(resIn).
 		Do().Into(resOut)
 	if err != nil {
@@ -131,7 +129,6 @@ func (c *customK8sResourceClient) Update(kvp *model.KVPair) (*model.KVPair, erro
 	logContext.Debug("Update resource by name")
 	err = c.restClient.Put().
 		Resource(c.resource).
-		Namespace("kube-system").
 		Body(resIn).
 		Name(name).
 		Do().Into(resOut)
@@ -194,7 +191,6 @@ func (c *customK8sResourceClient) Delete(kvp *model.KVPair) error {
 	logContext.Debug("Send delete request by name")
 	err = c.restClient.Delete().
 		Resource(c.resource).
-		Namespace("kube-system").
 		Name(name).
 		Do().Error()
 	if err != nil {
@@ -224,7 +220,6 @@ func (c *customK8sResourceClient) Get(key model.Key) (*model.KVPair, error) {
 	resOut := reflect.New(c.k8sResourceType).Interface().(CustomK8sResource)
 	err = c.restClient.Get().
 		Resource(c.resource).
-		Namespace("kube-system").
 		Name(name).
 		Do().Into(resOut)
 	if err != nil {
@@ -272,7 +267,6 @@ func (c *customK8sResourceClient) List(list model.ListInterface) ([]*model.KVPai
 	// Perform the request.
 	err := c.restClient.Get().
 		Resource(c.resource).
-		Namespace("kube-system").
 		Do().Into(reslOut)
 	if err != nil {
 		// Don't return errors for "not found".  This just
@@ -301,26 +295,9 @@ func (c *customK8sResourceClient) List(list model.ListInterface) ([]*model.KVPai
 	return kvps, reslOut.GetListMeta().GetResourceVersion(), nil
 }
 
-// EnsureInitialized performs client initialization required for a specific
-// Custom K8s Resource type.
+// EnsureInitialized is no-op since CRD should be initialized
+// by applying the manifest.
 func (c *customK8sResourceClient) EnsureInitialized() error {
-	logContext := log.WithField("Resource", c.resource)
-	logContext.Debug("Ensuring ThirdPartyResource exists")
-	res := extensions.ThirdPartyResource{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.name,
-			Namespace: "kube-system",
-		},
-		Description: c.description,
-		Versions:    []extensions.APIVersion{{Name: "v1"}},
-	}
-	_, err := c.clientSet.Extensions().ThirdPartyResources().Create(&res)
-	if err != nil {
-		// Don't care if it already exists.
-		if !kerrors.IsAlreadyExists(err) {
-			logContext.WithError(err).Info("Error initializing ThirdParyResource")
-			return K8sErrorToCalico(err, res)
-		}
-	}
+	// no-op, should be created by applying the manifest.
 	return nil
 }

@@ -16,7 +16,7 @@ package resources_test
 
 import (
 	"github.com/projectcalico/libcalico-go/lib/backend/k8s/resources"
-	"github.com/projectcalico/libcalico-go/lib/backend/k8s/thirdparty"
+	"github.com/projectcalico/libcalico-go/lib/backend/k8s/custom"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 	"github.com/projectcalico/libcalico-go/lib/net"
 
@@ -60,34 +60,34 @@ var _ = Describe("IP Pool conversion methods", func() {
 		},
 		Revision: "rv",
 	}
-	res1 := &thirdparty.IpPool{
+	res1 := &custom.IpPool{
 		Metadata: metav1.ObjectMeta{
 			Name:            name2,
 			ResourceVersion: "rv",
 		},
-		Spec: thirdparty.IpPoolSpec{
+		Spec: custom.IpPoolSpec{
 			Value: "{\"cidr\":\"11:22::/120\",\"ipip\":\"tunl0\",\"ipip_mode\":\"cross-subnet\",\"masquerade\":true,\"ipam\":false,\"disabled\":false}",
 		},
 	}
 
 	// Invalid Kubernetes resource, invalid name
-	resInvalidName := &thirdparty.IpPool{
+	resInvalidName := &custom.IpPool{
 		Metadata: metav1.ObjectMeta{
 			Name:            nameInvalid,
 			ResourceVersion: "test",
 		},
-		Spec: thirdparty.IpPoolSpec{
+		Spec: custom.IpPoolSpec{
 			Value: "{}",
 		},
 	}
 
 	// Invalid Kubernetes resource, invalid value
-	resInvalidValue := &thirdparty.IpPool{
+	resInvalidValue := &custom.IpPool{
 		Metadata: metav1.ObjectMeta{
 			Name:            name1,
 			ResourceVersion: "test",
 		},
-		Spec: thirdparty.IpPoolSpec{
+		Spec: custom.IpPoolSpec{
 			Value: "{",
 		},
 	}
@@ -123,7 +123,7 @@ var _ = Describe("IP Pool conversion methods", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(r.GetObjectMeta().GetName()).To(Equal(res1.Metadata.Name))
 		Expect(r.GetObjectMeta().GetResourceVersion()).To(Equal(res1.Metadata.ResourceVersion))
-		Expect(r).To(BeAssignableToTypeOf(&thirdparty.IpPool{}))
+		Expect(r).To(BeAssignableToTypeOf(&custom.IpPool{}))
 	})
 
 	It("should convert between a Kuberenetes resource and the equivalent KVPair", func() {

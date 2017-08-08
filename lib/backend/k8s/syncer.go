@@ -76,9 +76,9 @@ func (k *realKubeAPI) NetworkPolicyWatch(opts metav1.ListOptions) (watch watch.I
 
 func (k *realKubeAPI) GlobalConfigWatch(opts metav1.ListOptions) (watch watch.Interface, err error) {
 	globalConfigWatcher := cache.NewListWatchFromClient(
-		k.kc.tprClientV1,
+		k.kc.crdClientV1,
 		resources.GlobalConfigResourceName,
-		"kube-system",
+		"",
 		fields.Everything())
 	watch, err = globalConfigWatcher.WatchFunc(opts)
 	return
@@ -86,9 +86,9 @@ func (k *realKubeAPI) GlobalConfigWatch(opts metav1.ListOptions) (watch watch.In
 
 func (k *realKubeAPI) IPPoolWatch(opts metav1.ListOptions) (watch watch.Interface, err error) {
 	ipPoolWatcher := cache.NewListWatchFromClient(
-		k.kc.tprClientV1,
+		k.kc.crdClientV1,
 		resources.IPPoolResourceName,
-		"kube-system",
+		"",
 		fields.Everything())
 	watch, err = ipPoolWatcher.WatchFunc(opts)
 	return
@@ -116,9 +116,9 @@ func (k *realKubeAPI) NetworkPolicyList() (list extensions.NetworkPolicyList, er
 
 func (k *realKubeAPI) SystemNetworkPolicyWatch(opts metav1.ListOptions) (watch.Interface, error) {
 	watcher := cache.NewListWatchFromClient(
-		k.kc.tprClientV1alpha,
+		k.kc.crdClientV1,
 		resources.SystemNetworkPolicyResourceName,
-		"kube-system",
+		"",
 		fields.Everything())
 	return watcher.WatchFunc(opts)
 }
@@ -1025,16 +1025,16 @@ func (syn *kubeSyncer) parseCustomK8sResourceEvent(
 		"ResourceType": resourceType,
 		"EventType":    e.Type,
 	})
-	tpr, ok := e.Object.(resources.CustomK8sResource)
+	crd, ok := e.Object.(resources.CustomK8sResource)
 	if !ok {
 		logContext.Panicf("Invalid custom resource event. Object: %+v", e.Object)
 	}
 
-	logContext = logContext.WithField("Name", tpr.GetObjectMeta().GetName())
+	logContext = logContext.WithField("Name", crd.GetObjectMeta().GetName())
 	logContext.Debug("Parsing watch event")
 
 	// Convert the received resource into a KVPair.
-	kvp, err := converter.ToKVPair(tpr)
+	kvp, err := converter.ToKVPair(crd)
 	if err == nil {
 		// For deletes, we need to nil out the Value part of the KVPair
 		if e.Type == watch.Deleted {
@@ -1046,7 +1046,7 @@ func (syn *kubeSyncer) parseCustomK8sResourceEvent(
 	// Error converting resource.  Attempt to determine the Key and treat as
 	// a delete (Value will be nil).
 	logContext.WithError(err).Info("Failed to parse resource - may treat as delete")
-	key, err := converter.NameToKey(tpr.GetObjectMeta().GetName())
+	key, err := converter.NameToKey(crd.GetObjectMeta().GetName())
 	if err == nil {
 		logContext.WithField("Key", key).WithError(err).Error("Failed to parse resource, treating as deleted")
 		return &model.KVPair{
