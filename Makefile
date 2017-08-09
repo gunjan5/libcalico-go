@@ -4,7 +4,7 @@ default: all
 all: test
 test: ut
 
-K8S_VERSION=1.7.3
+K8S_VERSION=v1.7.3
 CALICO_BUILD?=calico/go-build
 PACKAGE_NAME?=projectcalico/libcalico-go
 LOCAL_USER_ID?=$(shell id -u $$USER)
@@ -51,7 +51,7 @@ run-kubernetes-master: stop-kubernetes-master
 	docker run \
 		--net=host --name st-apiserver \
 		--detach \
-		gcr.io/google_containers/hyperkube-amd64:v${K8S_VERSION} \
+		gcr.io/google_containers/hyperkube-amd64:${K8S_VERSION} \
 		/hyperkube apiserver \
 			--bind-address=0.0.0.0 \
 			--insecure-bind-address=0.0.0.0 \
@@ -66,7 +66,7 @@ run-kubernetes-master: stop-kubernetes-master
 	docker run \
 		--net=host --name st-controller-manager \
 		--detach \
-		gcr.io/google_containers/hyperkube-amd64:v${K8S_VERSION} \
+		gcr.io/google_containers/hyperkube-amd64:${K8S_VERSION} \
 		/hyperkube controller-manager \
                         --master=127.0.0.1:8080 \
                         --min-resync-period=3m \
@@ -76,6 +76,16 @@ run-kubernetes-master: stop-kubernetes-master
 
 	# Wait until we can configure a cluster role binding which allows anonymous auth.
 	while ! docker exec st-apiserver kubectl create clusterrolebinding anonymous-admin --clusterrole=cluster-admin --user=system:anonymous; do echo "Trying to create ClusterRoleBinding"; sleep 2; done
+
+	# Create CustomResourceDefinition (CRD) for Calico resources
+    # from the manifest CustomResourceDefinition.yaml
+    docker run \
+    	--net=host \
+    	--rm \
+    	-v  $(CURDIR):/manifest \
+    	lachlanevenson/k8s-kubectl:${K8S_VERSION} \
+    	--server=http://localhost:8080 \
+    	apply -f manifest/CustomResourceDefinition.yaml
 
 ## Stop the local kubernetes master
 stop-kubernetes-master:
