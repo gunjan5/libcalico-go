@@ -78,14 +78,14 @@ run-kubernetes-master: stop-kubernetes-master
 	while ! docker exec st-apiserver kubectl create clusterrolebinding anonymous-admin --clusterrole=cluster-admin --user=system:anonymous; do echo "Trying to create ClusterRoleBinding"; sleep 2; done
 
 	# Create CustomResourceDefinition (CRD) for Calico resources
-    # from the manifest CustomResourceDefinition.yaml
-    docker run \
-    	--net=host \
-    	--rm \
-    	-v  $(CURDIR):/manifest \
-    	lachlanevenson/k8s-kubectl:${K8S_VERSION} \
-    	--server=http://localhost:8080 \
-    	apply -f manifest/CustomResourceDefinition.yaml
+	# from the manifest CustomResourceDefinition.yaml
+	docker run \
+	    --net=host \
+	    --rm \
+		-v  $(CURDIR):/manifest \
+		lachlanevenson/k8s-kubectl:${K8S_VERSION} \
+		--server=http://localhost:8080 \
+		apply -f manifest/CustomResourceDefinition.yaml
 
 ## Stop the local kubernetes master
 stop-kubernetes-master:
