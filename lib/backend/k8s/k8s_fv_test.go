@@ -527,11 +527,7 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			Key:   model.PolicyKey{Name: kvp1Name},
 			Value: &calicoAllowPolicyModel,
 		}
-		kvp1b := &model.KVPair{
-			Key:      model.PolicyKey{Name: kvp1Name},
-			Value:    &calicoDisallowPolicyModel,
-			Revision: "1",
-		}
+
 		kvp2Name := "crd.projectcalico.org/my-test-snp2"
 		kvp2a := &model.KVPair{
 			Key:   model.PolicyKey{Name: kvp2Name},
@@ -571,6 +567,15 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			_, err := c.snpClient.Create(kvp1a)
 			Expect(err).To(HaveOccurred())
 		})
+
+		// Get the KVPair so we can use it's Revision number to do the Update operation.
+		snp1, err := c.Get(kvp1a.Key)
+		Expect(err).NotTo(HaveOccurred())
+		kvp1b := &model.KVPair{
+			Key:      model.PolicyKey{Name: kvp1Name},
+			Value:    &calicoDisallowPolicyModel,
+			Revision: snp1.Revision.(string),
+		}
 
 		By("Updating an existing System Network Policy", func() {
 			_, err := c.snpClient.Update(kvp1b)
@@ -664,16 +669,7 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 				ASNum:  numorstring.ASNumber(6512),
 			},
 		}
-		kvp1b := &model.KVPair{
-			Key: model.GlobalBGPPeerKey{
-				PeerIP: cnet.MustParseIP("10.0.0.1"),
-			},
-			Value: &model.BGPPeer{
-				PeerIP: cnet.MustParseIP("10.0.0.1"),
-				ASNum:  numorstring.ASNumber(6513),
-			},
-			Revision: "1",
-		}
+
 		kvp2a := &model.KVPair{
 			Key: model.GlobalBGPPeerKey{
 				PeerIP: cnet.MustParseIP("aa:bb::cc"),
@@ -708,6 +704,20 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			_, err := c.Create(kvp1a)
 			Expect(err).To(HaveOccurred())
 		})
+
+		// Get the KVPair so we can use it's Revision number to do the Update operation.
+		peer1, err := c.Get(kvp1a.Key)
+		Expect(err).NotTo(HaveOccurred())
+		kvp1b := &model.KVPair{
+			Key: model.GlobalBGPPeerKey{
+				PeerIP: cnet.MustParseIP("10.0.0.1"),
+			},
+			Value: &model.BGPPeer{
+				PeerIP: cnet.MustParseIP("10.0.0.1"),
+				ASNum:  numorstring.ASNumber(6513),
+			},
+			Revision: peer1.Revision.(string),
+		}
 
 		By("Updating an existing Global BGP Peer", func() {
 			_, err := c.Update(kvp1b)
@@ -815,7 +825,6 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 					PeerIP: cnet.MustParseIP("10.0.0.1"),
 					ASNum:  numorstring.ASNumber(6513),
 				},
-				Revision: "123",
 			}
 			kvp2a = &model.KVPair{
 				Key: model.NodeBGPPeerKey{
