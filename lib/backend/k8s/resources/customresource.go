@@ -21,6 +21,7 @@ import (
 	"github.com/projectcalico/libcalico-go/lib/errors"
 	log "github.com/sirupsen/logrus"
 
+	"fmt"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -122,10 +123,16 @@ func (c *customK8sResourceClient) Update(kvp *model.KVPair) (*model.KVPair, erro
 		return nil, err
 	}
 
+	fmt.Printf("\n\n**** in kvp: %v\n\n", kvp)
+	if kvp.Revision != nil {
+		fmt.Printf("\n\n**** in kvp.Revision: %v\n\n", kvp.Revision)
+	}
+	fmt.Printf("\n\n**** resIn: %v\n\n", resIn)
+
 	//// Get the object to get it's latest Revision number.
 	//kvpTmp, err := c.Get(kvp.Key)
 	//if kvpTmp != nil {
-	//	kvp.Revision = kvpTmp.Revision
+	//      kvp.Revision = kvpTmp.Revision
 	//}
 
 	// Send the update request using the name.
@@ -143,8 +150,11 @@ func (c *customK8sResourceClient) Update(kvp *model.KVPair) (*model.KVPair, erro
 		return nil, K8sErrorToCalico(err, kvp.Key)
 	}
 
+	fmt.Printf("\n\n**** resOut: %v\n\n", resOut)
+
 	// Update the revision information from the response.
 	kvp.Revision = resOut.GetObjectMeta().GetResourceVersion()
+	fmt.Printf("\n\n**** kvp: %v\n\n ***rev: %v", kvp, kvp.Revision)
 	return kvp, nil
 }
 
