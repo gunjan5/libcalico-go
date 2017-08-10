@@ -59,7 +59,7 @@ var _ = Describe("Global BGP conversion methods", func() {
 		},
 		Revision: "rv",
 	}
-	res1 := &custom.GlobalBgpPeer{
+	res1 := &custom.GlobalBGPPeer{
 		Metadata: metav1.ObjectMeta{
 			Name:            name2,
 			ResourceVersion: "rv",
@@ -70,7 +70,7 @@ var _ = Describe("Global BGP conversion methods", func() {
 	}
 
 	// Invalid Kubernetes resource, invalid name
-	resInvalid := &custom.GlobalBgpPeer{
+	resInvalid := &custom.GlobalBGPPeer{
 		Metadata: metav1.ObjectMeta{
 			Name:            nameInvalid,
 			ResourceVersion: "test",
@@ -111,8 +111,8 @@ var _ = Describe("Global BGP conversion methods", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(r.GetObjectMeta().GetName()).To(Equal(res1.Metadata.Name))
 		Expect(r.GetObjectMeta().GetResourceVersion()).To(Equal(res1.Metadata.ResourceVersion))
-		Expect(r).To(BeAssignableToTypeOf(&custom.GlobalBgpPeer{}))
-		Expect(r.(*custom.GlobalBgpPeer).Spec).To(Equal(res1.Spec))
+		Expect(r).To(BeAssignableToTypeOf(&custom.GlobalBGPPeer{}))
+		Expect(r.(*custom.GlobalBGPPeer).Spec).To(Equal(res1.Spec))
 	})
 
 	It("should convert between a Kuberenetes resource and the equivalent KVPair", func() {

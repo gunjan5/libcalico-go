@@ -68,7 +68,7 @@ func (_ IPPoolConverter) NameToKey(name string) (model.Key, error) {
 	}, nil
 }
 
-func (_ IPPoolConverter) ToKVPair(r CustomK8sResource) (*model.KVPair, error) {
+func (i IPPoolConverter) ToKVPair(r CustomK8sResource) (*model.KVPair, error) {
 	t := r.(*custom.IPPool)
 
 	// Convert k8s resource name format (192-168-0-1-24) to a CIDR.
@@ -85,6 +85,8 @@ func (_ IPPoolConverter) ToKVPair(r CustomK8sResource) (*model.KVPair, error) {
 			ipipInterface = ""
 		}
 	}
+
+	//kvp, err := i.
 
 	return &model.KVPair{
 		Key: model.IPPoolKey{CIDR: *cidr},

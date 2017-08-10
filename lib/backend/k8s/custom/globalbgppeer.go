@@ -22,38 +22,38 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// GlobalBgpPeer is the CustomResourceDefinition of a Calico Global BGP Peer resource in
+// GlobalBGPPeer is the CustomResourceDefinition of a Calico Global BGP Peer resource in
 // the Kubernetes API.
-type GlobalBgpPeer struct {
+type GlobalBGPPeer struct {
 	metav1.TypeMeta `json:",inline"`
 	Metadata        metav1.ObjectMeta `json:"metadata"`
 	Spec            api.BGPPeerSpec   `json:"spec"`
 }
 
-// GlobalBgpPeerList is a list of Calico Global BGP Peer resources.
-type GlobalBgpPeerList struct {
+// GlobalBGPPeerList is a list of Calico Global BGP Peer resources.
+type GlobalBGPPeerList struct {
 	metav1.TypeMeta `json:",inline"`
 	Metadata        metav1.ListMeta `json:"metadata"`
-	Items           []GlobalBgpPeer `json:"items"`
+	Items           []GlobalBGPPeer `json:"items"`
 }
 
 // GetObjectKind returns the kind of this object.  Required to satisfy Object interface
-func (e *GlobalBgpPeer) GetObjectKind() schema.ObjectKind {
+func (e *GlobalBGPPeer) GetObjectKind() schema.ObjectKind {
 	return &e.TypeMeta
 }
 
 // GetObjectMeta returns the object metadata of this object. Required to satisfy ObjectMetaAccessor interface
-func (e *GlobalBgpPeer) GetObjectMeta() metav1.Object {
+func (e *GlobalBGPPeer) GetObjectMeta() metav1.Object {
 	return &e.Metadata
 }
 
 // GetObjectKind returns the kind of this object. Required to satisfy Object interface
-func (el *GlobalBgpPeerList) GetObjectKind() schema.ObjectKind {
+func (el *GlobalBGPPeerList) GetObjectKind() schema.ObjectKind {
 	return &el.TypeMeta
 }
 
 // GetListMeta returns the list metadata of this object. Required to satisfy ListMetaAccessor interface
-func (el *GlobalBgpPeerList) GetListMeta() metav1.List {
+func (el *GlobalBGPPeerList) GetListMeta() metav1.List {
 	return &el.Metadata
 }
 
@@ -61,27 +61,27 @@ func (el *GlobalBgpPeerList) GetListMeta() metav1.List {
 // resources and ugorji. If/when these issues are resolved, the code below
 // should no longer be required.
 
-type GlobalBgpPeerListCopy GlobalBgpPeerList
-type GlobalBgpPeerCopy GlobalBgpPeer
+type GlobalBGPPeerListCopy GlobalBGPPeerList
+type GlobalBGPPeerCopy GlobalBGPPeer
 
-func (g *GlobalBgpPeer) UnmarshalJSON(data []byte) error {
-	tmp := GlobalBgpPeerCopy{}
+func (g *GlobalBGPPeer) UnmarshalJSON(data []byte) error {
+	tmp := GlobalBGPPeerCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := GlobalBgpPeer(tmp)
+	tmp2 := GlobalBGPPeer(tmp)
 	*g = tmp2
 	return nil
 }
 
-func (l *GlobalBgpPeerList) UnmarshalJSON(data []byte) error {
-	tmp := GlobalBgpPeerListCopy{}
+func (l *GlobalBGPPeerList) UnmarshalJSON(data []byte) error {
+	tmp := GlobalBGPPeerListCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := GlobalBgpPeerList(tmp)
+	tmp2 := GlobalBGPPeerList(tmp)
 	*l = tmp2
 	return nil
 }

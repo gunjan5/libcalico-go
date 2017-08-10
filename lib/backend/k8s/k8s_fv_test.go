@@ -528,8 +528,9 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			Value: &calicoAllowPolicyModel,
 		}
 		kvp1b := &model.KVPair{
-			Key:   model.PolicyKey{Name: kvp1Name},
-			Value: &calicoDisallowPolicyModel,
+			Key:      model.PolicyKey{Name: kvp1Name},
+			Value:    &calicoDisallowPolicyModel,
+			Revision: "",
 		}
 		kvp2Name := "crd.projectcalico.org/my-test-snp2"
 		kvp2a := &model.KVPair{
@@ -1194,7 +1195,7 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 					CIDR:          *cidr,
 					IPIPInterface: "tunl0",
 					Masquerade:    true,
-					IPAM:          true,
+					IPAM:          false,
 					Disabled:      true,
 				},
 			}
@@ -1206,7 +1207,7 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			Expect(receivedPool.Value.(*model.IPPool).CIDR).To(Equal(*cidr))
 			Expect(receivedPool.Value.(*model.IPPool).IPIPInterface).To(Equal("tunl0"))
 			Expect(receivedPool.Value.(*model.IPPool).Masquerade).To(Equal(true))
-			Expect(receivedPool.Value.(*model.IPPool).IPAM).To(Equal(true))
+			Expect(receivedPool.Value.(*model.IPPool).IPAM).To(Equal(false))
 			Expect(receivedPool.Value.(*model.IPPool).Disabled).To(Equal(true))
 		})
 

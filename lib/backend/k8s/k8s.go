@@ -231,8 +231,8 @@ func buildCRDClientV1(cfg rest.Config) (*rest.RESTClient, error) {
 				&custom.GlobalConfigList{},
 				&custom.IPPool{},
 				&custom.IPPoolList{},
-				&custom.GlobalBgpPeer{},
-				&custom.GlobalBgpPeerList{},
+				&custom.GlobalBGPPeer{},
+				&custom.GlobalBGPPeerList{},
 				&custom.SystemNetworkPolicy{},
 				&custom.SystemNetworkPolicyList{},
 			)
