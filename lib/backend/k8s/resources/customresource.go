@@ -155,7 +155,11 @@ func (c *customK8sResourceClient) Apply(kvp *model.KVPair) (*model.KVPair, error
 	// Attempt and Create and do an Update if the resource already exists.
 	// We only log debug here since the Update and Create will
 	// also log.
-	updated, err := c.Create(kvp)
+	// Can't set Revision while creating a resource.
+	updated, err := c.Create(&model.KVPair{
+		Key:   kvp.Key,
+		Value: kvp.Value,
+	})
 	if err != nil {
 		if _, ok := err.(errors.ErrorResourceAlreadyExists); !ok {
 			logContext.Debug("Error applying resource (using Create)")
