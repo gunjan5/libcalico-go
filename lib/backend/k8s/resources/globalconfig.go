@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	GlobalConfigResourceName = "GlobalConfigs"
+	GlobalConfigResourceName = "GlobalConfig"
 	GlobalConfigCRDName      = "globalconfigs.crd.projectcalico.org"
 )
 

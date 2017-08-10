@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	IPPoolResourceName = "IPPools"
+	IPPoolResourceName = "IPPool"
 	IPPoolCRDName      = "ippools.crd.projectcalico.org"
 )
 

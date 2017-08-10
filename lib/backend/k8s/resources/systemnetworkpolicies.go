@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	SystemNetworkPolicyResourceName = "SystemNetworkPolicies"
+	SystemNetworkPolicyResourceName = "SystemNetworkPolicy"
 	SystemNetworkPolicyCRDName      = "systemnetworkpolicies.crd.projectcalico.org"
 	SystemNetworkPolicyNamePrefix   = "crd.projectcalico.org/"
 )
