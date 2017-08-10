@@ -530,7 +530,7 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 		kvp1b := &model.KVPair{
 			Key:      model.PolicyKey{Name: kvp1Name},
 			Value:    &calicoDisallowPolicyModel,
-			Revision: "123",
+			Revision: "1",
 		}
 		kvp2Name := "crd.projectcalico.org/my-test-snp2"
 		kvp2a := &model.KVPair{
@@ -672,7 +672,7 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 				PeerIP: cnet.MustParseIP("10.0.0.1"),
 				ASNum:  numorstring.ASNumber(6513),
 			},
-			Revision: "123",
+			Revision: "1",
 		}
 		kvp2a := &model.KVPair{
 			Key: model.GlobalBGPPeerKey{
