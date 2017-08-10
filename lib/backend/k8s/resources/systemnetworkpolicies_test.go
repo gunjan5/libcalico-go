@@ -16,8 +16,8 @@ package resources_test
 
 import (
 	"github.com/projectcalico/libcalico-go/lib/api"
-	"github.com/projectcalico/libcalico-go/lib/backend/k8s/resources"
 	"github.com/projectcalico/libcalico-go/lib/backend/k8s/custom"
+	"github.com/projectcalico/libcalico-go/lib/backend/k8s/resources"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 	"github.com/projectcalico/libcalico-go/lib/numorstring"
 
@@ -39,16 +39,16 @@ var _ = Describe("System Network Policies conversion methods", func() {
 
 	// Compatible set of list, key and name
 	list1 := model.PolicyListOptions{
-		Name: "snp.projectcalico.org/abcd",
+		Name: "crd.projectcalico.org/abcd",
 	}
 	key1 := model.PolicyKey{
-		Name: "snp.projectcalico.org/abcd",
+		Name: "crd.projectcalico.org/abcd",
 	}
 	name1 := "abcd"
 
 	// Compatible set of key and name
 	key2 := model.PolicyKey{
-		Name: "snp.projectcalico.org/foo.bar",
+		Name: "crd.projectcalico.org/foo.bar",
 	}
 	name2 := "foo.bar"
 

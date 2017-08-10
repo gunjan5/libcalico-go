@@ -30,9 +30,9 @@ import (
 )
 
 const (
-	SystemNetworkPolicyResourceName = "SystemNetworkPolicy"
+	SystemNetworkPolicyResourceName = "SystemNetworkPolicies"
 	SystemNetworkPolicyCRDName      = "systemnetworkpolicies.crd.projectcalico.org"
-	SystemNetworkPolicyNamePrefix   = "snp.projectcalico.org/"
+	SystemNetworkPolicyNamePrefix   = "crd.projectcalico.org/"
 )
 
 func NewSystemNetworkPolicyClient(c *kubernetes.Clientset, r *rest.RESTClient) K8sResourceClient {

@@ -520,11 +520,11 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 		// In the backend, the Policy name is prepended to indicate where
 		// the policy is derived from in KDD.  The System Network Policy
 		// is a CRD and in the backend the name is prepended with
-		// "snp.projectcalico.org/".  The SNP CRUD operations assume that
+		// "crd.projectcalico.org/".  The SNP CRUD operations assume that
 		// the name is of the correct format (it's up to the calling code
 		// to fan-out Policy CRUD operations to the appropriate KDD client
 		// based on the prefix).
-		kvp1Name := "snp.projectcalico.org/my-test-snp"
+		kvp1Name := "crd.projectcalico.org/my-test-snp"
 		kvp1a := &model.KVPair{
 			Key:   model.PolicyKey{Name: kvp1Name},
 			Value: &calicoAllowPolicyModel,
@@ -533,7 +533,7 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			Key:   model.PolicyKey{Name: kvp1Name},
 			Value: &calicoDisallowPolicyModel,
 		}
-		kvp2Name := "snp.projectcalico.org/my-test-snp2"
+		kvp2Name := "crd.projectcalico.org/my-test-snp2"
 		kvp2a := &model.KVPair{
 			Key:   model.PolicyKey{Name: kvp2Name},
 			Value: &calicoAllowPolicyModel,
@@ -628,9 +628,9 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 		})
 
 		By("Getting an existing System Network Policy", func() {
-			kvp, err := c.Get(model.PolicyKey{Name: "snp.projectcalico.org/my-test-snp"})
+			kvp, err := c.Get(model.PolicyKey{Name: "crd.projectcalico.org/my-test-snp"})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(kvp.Key.(model.PolicyKey).Name).To(Equal("snp.projectcalico.org/my-test-snp"))
+			Expect(kvp.Key.(model.PolicyKey).Name).To(Equal("crd.projectcalico.org/my-test-snp"))
 			Expect(kvp.Value.(*model.Policy)).To(Equal(kvp1b.Value))
 		})
 
@@ -640,7 +640,7 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			kvps, err := c.List(model.PolicyListOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(kvps).To(HaveLen(1))
-			Expect(kvps[len(kvps)-1].Key.(model.PolicyKey).Name).To(Equal("snp.projectcalico.org/my-test-snp"))
+			Expect(kvps[len(kvps)-1].Key.(model.PolicyKey).Name).To(Equal("crd.projectcalico.org/my-test-snp"))
 			Expect(kvps[len(kvps)-1].Value.(*model.Policy)).To(Equal(kvp1b.Value))
 		})
 
