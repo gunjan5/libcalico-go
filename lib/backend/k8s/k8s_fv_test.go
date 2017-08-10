@@ -549,8 +549,10 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			Eventually(cb.GetSyncerValuePresentFunc(kvp2a.Key)).Should(BeFalse())
 		})
 
+		snp1 := &model.KVPair{}
 		By("Creating a System Network Policy", func() {
-			_, err := c.snpClient.Create(kvp1a)
+			var err error
+			snp1, err = c.snpClient.Create(kvp1a)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -564,9 +566,6 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		// Get the KVPair so we can use it's Revision number to do the Update operation.
-		snp1, err := c.Get(kvp1a.Key)
-		Expect(err).NotTo(HaveOccurred())
 		kvp1b := &model.KVPair{
 			Key:      model.PolicyKey{Name: kvp1Name},
 			Value:    &calicoDisallowPolicyModel,
@@ -691,8 +690,10 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			c.Delete(kvp2a)
 		}()
 
+		peer1 := &model.KVPair{}
 		By("Creating a Global BGP Peer", func() {
-			_, err := c.Create(kvp1a)
+			var err error
+			peer1, err = c.Create(kvp1a)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -701,9 +702,6 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		// Get the KVPair so we can use it's Revision number to do the Update operation.
-		peer1, err := c.Get(kvp1a.Key)
-		Expect(err).NotTo(HaveOccurred())
 		kvp1b := &model.KVPair{
 			Key: model.GlobalBGPPeerKey{
 				PeerIP: cnet.MustParseIP("10.0.0.1"),
