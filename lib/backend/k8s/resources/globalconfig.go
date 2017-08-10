@@ -29,7 +29,7 @@ import (
 
 const (
 	GlobalConfigResourceName = "GlobalConfigs"
-	GlobalConfigCRDName      = "GlobalConfigs.crd.projectcalico.org"
+	GlobalConfigCRDName      = "globalconfigs.crd.projectcalico.org"
 )
 
 func NewGlobalConfigClient(c *kubernetes.Clientset, r *rest.RESTClient) K8sResourceClient {
