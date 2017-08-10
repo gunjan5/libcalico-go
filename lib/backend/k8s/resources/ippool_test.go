@@ -59,6 +59,7 @@ var _ = Describe("IP Pool conversion methods", func() {
 			IPIPMode:      "cross-subnet",
 			IPIPInterface: "tunl0",
 			Disabled:      false,
+			IPAM:          true,
 		},
 		Revision: "rv",
 	}
