@@ -583,11 +583,6 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			Eventually(cb.GetSyncerValuePresentFunc(kvp2a.Key)).Should(BeFalse())
 		})
 
-		By("Checking cache has correct System Network Policy entries", func() {
-			Eventually(cb.GetSyncerValueFunc(kvp1a.Key)).Should(Equal(kvp1b.Value))
-			Eventually(cb.GetSyncerValueFunc(kvp2a.Key)).Should(Equal(kvp2a.Value))
-		})
-
 		snp2 := &model.KVPair{}
 		By("Applying a non-existent System Network Policy", func() {
 			var err error
@@ -600,6 +595,11 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			Value:    &calicoDisallowPolicyModel,
 			Revision: snp2.Revision.(string),
 		}
+
+		By("Checking cache has correct System Network Policy entries", func() {
+			Eventually(cb.GetSyncerValueFunc(kvp1a.Key)).Should(Equal(kvp1b.Value))
+			Eventually(cb.GetSyncerValueFunc(kvp2a.Key)).Should(Equal(kvp2a.Value))
+		})
 
 		By("Updating the System Network Policy created by Apply", func() {
 			_, err := c.snpClient.Apply(kvp2b)
