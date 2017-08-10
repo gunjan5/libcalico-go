@@ -15,8 +15,9 @@
 package resources_test
 
 import (
-	"github.com/projectcalico/libcalico-go/lib/backend/k8s/resources"
+	"github.com/projectcalico/libcalico-go/lib/api"
 	"github.com/projectcalico/libcalico-go/lib/backend/k8s/custom"
+	"github.com/projectcalico/libcalico-go/lib/backend/k8s/resources"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 	"github.com/projectcalico/libcalico-go/lib/net"
 
@@ -57,6 +58,7 @@ var _ = Describe("IP Pool conversion methods", func() {
 			Masquerade:    true,
 			IPIPMode:      "cross-subnet",
 			IPIPInterface: "tunl0",
+			Disabled:      false,
 		},
 		Revision: "rv",
 	}
@@ -65,8 +67,13 @@ var _ = Describe("IP Pool conversion methods", func() {
 			Name:            name2,
 			ResourceVersion: "rv",
 		},
-		Spec: custom.IpPoolSpec{
-			Value: "{\"cidr\":\"11:22::/120\",\"ipip\":\"tunl0\",\"ipip_mode\":\"cross-subnet\",\"masquerade\":true,\"ipam\":false,\"disabled\":false}",
+		Spec: api.IPPoolSpec{
+			IPIP: &api.IPIPConfiguration{
+				Enabled: true,
+				Mode:    "cross-subnet",
+			},
+			NATOutgoing: true,
+			Disabled:    false,
 		},
 	}
 
@@ -76,20 +83,7 @@ var _ = Describe("IP Pool conversion methods", func() {
 			Name:            nameInvalid,
 			ResourceVersion: "test",
 		},
-		Spec: custom.IpPoolSpec{
-			Value: "{}",
-		},
-	}
-
-	// Invalid Kubernetes resource, invalid value
-	resInvalidValue := &custom.IPPool{
-		Metadata: metav1.ObjectMeta{
-			Name:            name1,
-			ResourceVersion: "test",
-		},
-		Spec: custom.IpPoolSpec{
-			Value: "{",
-		},
+		Spec: api.IPPoolSpec{},
 	}
 
 	It("should convert an incomplete ListInterface to no Key", func() {
@@ -137,11 +131,6 @@ var _ = Describe("IP Pool conversion methods", func() {
 
 	It("should fail to convert an invalid Kuberenetes resource (invalid name)", func() {
 		_, err := converter.ToKVPair(resInvalidName)
-		Expect(err).To(HaveOccurred())
-	})
-
-	It("should fail to convert an invalid Kuberenetes resource (invalid value)", func() {
-		_, err := converter.ToKVPair(resInvalidValue)
 		Expect(err).To(HaveOccurred())
 	})
 })

@@ -60,11 +60,11 @@ func (el *IPPoolList) GetListMeta() metav1.List {
 // resources and ugorji. If/when these issues are resolved, the code below
 // should no longer be required.
 
-type IpPoolListCopy IPPoolList
-type IpPoolCopy IPPool
+type IPPoolListCopy IPPoolList
+type IPPoolCopy IPPool
 
 func (g *IPPool) UnmarshalJSON(data []byte) error {
-	tmp := IpPoolCopy{}
+	tmp := IPPoolCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (g *IPPool) UnmarshalJSON(data []byte) error {
 }
 
 func (l *IPPoolList) UnmarshalJSON(data []byte) error {
-	tmp := IpPoolListCopy{}
+	tmp := IPPoolListCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
