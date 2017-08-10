@@ -533,10 +533,6 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			Key:   model.PolicyKey{Name: kvp2Name},
 			Value: &calicoAllowPolicyModel,
 		}
-		kvp2b := &model.KVPair{
-			Key:   model.PolicyKey{Name: kvp2Name},
-			Value: &calicoDisallowPolicyModel,
-		}
 
 		// Make sure we clean up after ourselves.  We allow this to fail because
 		// part of our explicit testing below is to delete the resource.
@@ -587,15 +583,23 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			Eventually(cb.GetSyncerValuePresentFunc(kvp2a.Key)).Should(BeFalse())
 		})
 
-		By("Applying a non-existent System Network Policy", func() {
-			_, err := c.snpClient.Apply(kvp2a)
-			Expect(err).NotTo(HaveOccurred())
-		})
-
 		By("Checking cache has correct System Network Policy entries", func() {
 			Eventually(cb.GetSyncerValueFunc(kvp1a.Key)).Should(Equal(kvp1b.Value))
 			Eventually(cb.GetSyncerValueFunc(kvp2a.Key)).Should(Equal(kvp2a.Value))
 		})
+
+		snp2 := &model.KVPair{}
+		By("Applying a non-existent System Network Policy", func() {
+			var err error
+			snp2, err = c.snpClient.Apply(kvp2a)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		kvp2b := &model.KVPair{
+			Key:      model.PolicyKey{Name: kvp2Name},
+			Value:    &calicoDisallowPolicyModel,
+			Revision: snp2.Revision.(string),
+		}
 
 		By("Updating the System Network Policy created by Apply", func() {
 			_, err := c.snpClient.Apply(kvp2b)
@@ -679,14 +683,6 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 				ASNum:  numorstring.ASNumber(6514),
 			},
 		}
-		kvp2b := &model.KVPair{
-			Key: model.GlobalBGPPeerKey{
-				PeerIP: cnet.MustParseIP("aa:bb::cc"),
-			},
-			Value: &model.BGPPeer{
-				PeerIP: cnet.MustParseIP("aa:bb::cc"),
-			},
-		}
 
 		// Make sure we clean up after ourselves.  We allow this to fail because
 		// part of our explicit testing below is to delete the resource.
@@ -724,10 +720,22 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
+		peer2 := &model.KVPair{}
 		By("Applying a non-existent Global BGP Peer", func() {
-			_, err := c.Apply(kvp2a)
+			var err error
+			peer2, err = c.Apply(kvp2a)
 			Expect(err).NotTo(HaveOccurred())
 		})
+
+		kvp2b := &model.KVPair{
+			Key: model.GlobalBGPPeerKey{
+				PeerIP: cnet.MustParseIP("aa:bb::cc"),
+			},
+			Value: &model.BGPPeer{
+				PeerIP: cnet.MustParseIP("aa:bb::cc"),
+			},
+			Revision: peer2.Revision.(string),
+		}
 
 		By("Updating the Global BGP Peer created by Apply", func() {
 			_, err := c.Apply(kvp2b)
