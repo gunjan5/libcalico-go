@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	GlobalBGPPeerResourceName = "GlobalBGPPeer"
+	GlobalBGPPeerResourceName = "GlobalBGPPeers"
 	GlobalBGPPeerCRDName      = "globalbgppeers.crd.projectcalico.org"
 )
 
