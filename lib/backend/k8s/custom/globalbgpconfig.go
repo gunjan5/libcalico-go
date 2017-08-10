@@ -29,8 +29,8 @@ type GlobalBgpConfig struct {
 
 type GlobalBgpConfigSpec struct {
 	// The reason we have Name field in Spec is because k8s metadata
-	// name field makes the string lowercase, so Name field in Spec is
-	// to preserve the casing.
+	// name field requires the string to be lowercase, so Name field
+	// in Spec is to preserve the casing.
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }

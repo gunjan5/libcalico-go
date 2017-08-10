@@ -299,9 +299,8 @@ func (c *customK8sResourceClient) List(list model.ListInterface) ([]*model.KVPai
 	return kvps, reslOut.GetListMeta().GetResourceVersion(), nil
 }
 
-// EnsureInitialized is no-op since CRD should be initialized
-// by applying the manifest.
+// EnsureInitialized is a no-op since the CRD should be
+// initialized in advance.
 func (c *customK8sResourceClient) EnsureInitialized() error {
-	// no-op, should be created by applying the manifest.
 	return nil
 }

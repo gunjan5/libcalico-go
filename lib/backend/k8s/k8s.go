@@ -193,8 +193,8 @@ func (c *KubeClient) ensureClusterType() (bool, error) {
 	}
 	log.WithField("value", value).Debug("Setting ClusterType")
 	_, err = c.Apply(&model.KVPair{
-		Key:   k,
-		Value: value,
+		Key:      k,
+		Value:    value,
 		Revision: rv,
 	})
 	if err != nil {

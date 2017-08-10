@@ -85,7 +85,7 @@ run-kubernetes-master: stop-kubernetes-master
 		-v  $(CURDIR):/manifest \
 		lachlanevenson/k8s-kubectl:${K8S_VERSION} \
 		--server=http://localhost:8080 \
-		apply -f manifest/CustomResourceDefinition.yaml
+		apply -f manifest/test/crds.yaml
 
 ## Stop the local kubernetes master
 stop-kubernetes-master:
