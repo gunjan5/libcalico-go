@@ -22,37 +22,37 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// IpPool is the CustomResourceDefinition definition of an IPPool in the Kubernetes API.
-type IpPool struct {
+// IPPool is the CustomResourceDefinition definition of an IPPool in the Kubernetes API.
+type IPPool struct {
 	metav1.TypeMeta `json:",inline"`
 	Metadata        metav1.ObjectMeta `json:"metadata"`
 	Spec            api.IPPoolSpec    `json:"spec"`
 }
 
-// IpPoolList is a list of IpPool resources.
-type IpPoolList struct {
+// IPPoolList is a list of IPPool resources.
+type IPPoolList struct {
 	metav1.TypeMeta `json:",inline"`
 	Metadata        metav1.ListMeta `json:"metadata"`
-	Items           []IpPool        `json:"items"`
+	Items           []IPPool        `json:"items"`
 }
 
 // GetObjectKind returns the kind of this object.  Required to satisfy Object interface
-func (e *IpPool) GetObjectKind() schema.ObjectKind {
+func (e *IPPool) GetObjectKind() schema.ObjectKind {
 	return &e.TypeMeta
 }
 
 // GetOjbectMeta returns the object metadata of this object. Required to satisfy ObjectMetaAccessor interface
-func (e *IpPool) GetObjectMeta() metav1.Object {
+func (e *IPPool) GetObjectMeta() metav1.Object {
 	return &e.Metadata
 }
 
 // GetObjectKind returns the kind of this object. Required to satisfy Object interface
-func (el *IpPoolList) GetObjectKind() schema.ObjectKind {
+func (el *IPPoolList) GetObjectKind() schema.ObjectKind {
 	return &el.TypeMeta
 }
 
 // GetListMeta returns the list metadata of this object. Required to satisfy ListMetaAccessor interface
-func (el *IpPoolList) GetListMeta() metav1.List {
+func (el *IPPoolList) GetListMeta() metav1.List {
 	return &el.Metadata
 }
 
@@ -60,27 +60,27 @@ func (el *IpPoolList) GetListMeta() metav1.List {
 // resources and ugorji. If/when these issues are resolved, the code below
 // should no longer be required.
 
-type IpPoolListCopy IpPoolList
-type IpPoolCopy IpPool
+type IpPoolListCopy IPPoolList
+type IpPoolCopy IPPool
 
-func (g *IpPool) UnmarshalJSON(data []byte) error {
+func (g *IPPool) UnmarshalJSON(data []byte) error {
 	tmp := IpPoolCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := IpPool(tmp)
+	tmp2 := IPPool(tmp)
 	*g = tmp2
 	return nil
 }
 
-func (l *IpPoolList) UnmarshalJSON(data []byte) error {
+func (l *IPPoolList) UnmarshalJSON(data []byte) error {
 	tmp := IpPoolListCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := IpPoolList(tmp)
+	tmp2 := IPPoolList(tmp)
 	*l = tmp2
 	return nil
 }

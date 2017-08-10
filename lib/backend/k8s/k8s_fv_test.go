@@ -251,9 +251,7 @@ func CreateClientAndSyncer(cfg capi.KubeConfig) (*KubeClient, *cb, api.Syncer) {
 
 	// Ensure the backend is initialized.
 	err = c.EnsureInitialized()
-	if err != nil {
-		panic(err)
-	}
+	Expect(err).NotTo(HaveOccurred(), "Failed to initialize the backend.")
 
 	// Start the syncer.
 	updateChan := make(chan api.Update)

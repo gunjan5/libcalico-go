@@ -37,8 +37,8 @@ func NewIPPoolClient(c *kubernetes.Clientset, r *rest.RESTClient) K8sResourceCli
 		name:            IPPoolCRDName,
 		resource:        IPPoolResourceName,
 		description:     "Calico IP Pools",
-		k8sResourceType: reflect.TypeOf(custom.IpPool{}),
-		k8sListType:     reflect.TypeOf(custom.IpPoolList{}),
+		k8sResourceType: reflect.TypeOf(custom.IPPool{}),
+		k8sListType:     reflect.TypeOf(custom.IPPoolList{}),
 		converter:       IPPoolConverter{},
 	}
 }
@@ -69,7 +69,7 @@ func (_ IPPoolConverter) NameToKey(name string) (model.Key, error) {
 }
 
 func (_ IPPoolConverter) ToKVPair(r CustomK8sResource) (*model.KVPair, error) {
-	t := r.(*custom.IpPool)
+	t := r.(*custom.IPPool)
 
 	// Convert k8s resource name format (192-168-0-1-24) to CIDR.
 	cidr, err := ResourceNameToIPNet(t.Metadata.Name)
@@ -103,7 +103,7 @@ func (_ IPPoolConverter) ToKVPair(r CustomK8sResource) (*model.KVPair, error) {
 func (_ IPPoolConverter) FromKVPair(kvp *model.KVPair) (CustomK8sResource, error) {
 	val := kvp.Value.(*model.IPPool)
 
-	crd := custom.IpPool{
+	crd := custom.IPPool{
 		Metadata: metav1.ObjectMeta{
 			Name: IPNetToResourceName(kvp.Key.(model.IPPoolKey).CIDR),
 		},

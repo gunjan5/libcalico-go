@@ -152,19 +152,19 @@ func (c *customK8sResourceClient) Apply(kvp *model.KVPair) (*model.KVPair, error
 	})
 	logContext.Debug("Apply custom Kubernetes resource")
 
-	// Attempt and Update and roll back to a Create if the resource does
-	// not exist.  We only log debug here since the Update and Create will
+	// Attempt and Create and do an Update if the resource already exists.
+	// We only log debug here since the Update and Create will
 	// also log.
-	updated, err := c.Update(kvp)
+	updated, err := c.Create(kvp)
 	if err != nil {
-		if _, ok := err.(errors.ErrorResourceDoesNotExist); !ok {
-			logContext.Debug("Error applying resource (using Update)")
+		if _, ok := err.(errors.ErrorResourceAlreadyExists); !ok {
+			logContext.Debug("Error applying resource (using Create)")
 			return nil, err
 		}
 
-		updated, err = c.Create(kvp)
+		updated, err = c.Update(kvp)
 		if err != nil {
-			logContext.Debug("Error applying resource (using Create)")
+			logContext.Debug("Error applying resource (using Update)")
 			return nil, err
 		}
 	}

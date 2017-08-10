@@ -182,17 +182,20 @@ func (c *KubeClient) ensureClusterType() (bool, error) {
 		}
 		// Resource does not exist.
 	}
+	rv := ""
 	if ct != nil {
 		existingValue := ct.Value.(string)
 		if !strings.Contains(existingValue, "KDD") {
 			existingValue = fmt.Sprintf("%s,KDD", existingValue)
 		}
 		value = existingValue
+		rv = ct.Revision.(string)
 	}
 	log.WithField("value", value).Debug("Setting ClusterType")
 	_, err = c.Apply(&model.KVPair{
 		Key:   k,
 		Value: value,
+		Revision: rv,
 	})
 	if err != nil {
 		// Don't return an error, but indicate that we need
@@ -226,8 +229,8 @@ func buildCRDClientV1(cfg rest.Config) (*rest.RESTClient, error) {
 				*cfg.GroupVersion,
 				&custom.GlobalConfig{},
 				&custom.GlobalConfigList{},
-				&custom.IpPool{},
-				&custom.IpPoolList{},
+				&custom.IPPool{},
+				&custom.IPPoolList{},
 				&custom.GlobalBgpPeer{},
 				&custom.GlobalBgpPeerList{},
 				&custom.SystemNetworkPolicy{},

@@ -60,7 +60,7 @@ var _ = Describe("IP Pool conversion methods", func() {
 		},
 		Revision: "rv",
 	}
-	res1 := &custom.IpPool{
+	res1 := &custom.IPPool{
 		Metadata: metav1.ObjectMeta{
 			Name:            name2,
 			ResourceVersion: "rv",
@@ -71,7 +71,7 @@ var _ = Describe("IP Pool conversion methods", func() {
 	}
 
 	// Invalid Kubernetes resource, invalid name
-	resInvalidName := &custom.IpPool{
+	resInvalidName := &custom.IPPool{
 		Metadata: metav1.ObjectMeta{
 			Name:            nameInvalid,
 			ResourceVersion: "test",
@@ -82,7 +82,7 @@ var _ = Describe("IP Pool conversion methods", func() {
 	}
 
 	// Invalid Kubernetes resource, invalid value
-	resInvalidValue := &custom.IpPool{
+	resInvalidValue := &custom.IPPool{
 		Metadata: metav1.ObjectMeta{
 			Name:            name1,
 			ResourceVersion: "test",
@@ -123,7 +123,7 @@ var _ = Describe("IP Pool conversion methods", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(r.GetObjectMeta().GetName()).To(Equal(res1.Metadata.Name))
 		Expect(r.GetObjectMeta().GetResourceVersion()).To(Equal(res1.Metadata.ResourceVersion))
-		Expect(r).To(BeAssignableToTypeOf(&custom.IpPool{}))
+		Expect(r).To(BeAssignableToTypeOf(&custom.IPPool{}))
 	})
 
 	It("should convert between a Kuberenetes resource and the equivalent KVPair", func() {
