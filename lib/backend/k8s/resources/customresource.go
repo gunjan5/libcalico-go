@@ -122,11 +122,11 @@ func (c *customK8sResourceClient) Update(kvp *model.KVPair) (*model.KVPair, erro
 		return nil, err
 	}
 
-	// Get the object to get it's latest Revision number.
-	kvpTmp, err := c.Get(kvp.Key)
-	if kvpTmp != nil {
-		kvp.Revision = kvpTmp.Revision
-	}
+	//// Get the object to get it's latest Revision number.
+	//kvpTmp, err := c.Get(kvp.Key)
+	//if kvpTmp != nil {
+	//	kvp.Revision = kvpTmp.Revision
+	//}
 
 	// Send the update request using the name.
 	resOut := reflect.New(c.k8sResourceType).Interface().(CustomK8sResource)

@@ -86,8 +86,6 @@ func (i IPPoolConverter) ToKVPair(r CustomK8sResource) (*model.KVPair, error) {
 		}
 	}
 
-	//kvp, err := i.
-
 	return &model.KVPair{
 		Key: model.IPPoolKey{CIDR: *cidr},
 		Value: &model.IPPool{
