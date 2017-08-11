@@ -21,7 +21,6 @@ import (
 	"github.com/projectcalico/libcalico-go/lib/errors"
 	log "github.com/sirupsen/logrus"
 
-	"fmt"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -116,45 +115,58 @@ func (c *customK8sResourceClient) Update(kvp *model.KVPair) (*model.KVPair, erro
 	})
 	logContext.Debug("Update custom Kubernetes resource")
 
-	// Convert the KVPair to the K8s resource.
-	resIn, err := c.converter.FromKVPair(kvp)
-	if err != nil {
-		logContext.WithError(err).Info("Error updating resource")
-		return nil, err
-	}
-
-	fmt.Printf("\n\n**** in kvp: %v\n\n", kvp)
-	if kvp.Revision != nil {
-		fmt.Printf("\n\n**** in kvp.Revision: %v\n\n", kvp.Revision)
-	}
-	fmt.Printf("\n\n**** resIn: %v\n\n", resIn)
-
-	//// Get the object to get it's latest Revision number.
-	//kvpTmp, err := c.Get(kvp.Key)
-	//if kvpTmp != nil {
-	//      kvp.Revision = kvpTmp.Revision
-	//}
-
-	// Send the update request using the name.
+	// Create storage for the updated resource.
 	resOut := reflect.New(c.k8sResourceType).Interface().(CustomK8sResource)
-	name := resIn.GetObjectMeta().GetName()
-	logContext = logContext.WithField("Name", name)
-	logContext.Debug("Update resource by name")
-	err = c.restClient.Put().
-		Resource(c.resource).
-		Body(resIn).
-		Name(name).
-		Do().Into(resOut)
-	if err != nil {
-		logContext.WithError(err).Info("Error updating resource")
-		return nil, K8sErrorToCalico(err, kvp.Key)
-	}
 
-	fmt.Printf("\n\n**** resOut: %v\n\n", resOut)
+	providedRV := ""
+	if kvp.Revision != nil {
+		providedRV = kvp.Revision.(string)
+	}
+	for i := 0; i < 5; i++ {
+		// If no revision was passed, get the object to use its latest Revision number.
+		// If a revision was passed, then we should just use that.
+		if providedRV == "" {
+			logContext.Debug("Querying for resource version")
+			k, err := c.Get(kvp.Key)
+			if err != nil {
+				return nil, err
+			}
+			kvp.Revision = k.Revision.(string)
+			logContext.Debugf("Set resource version to %s", kvp.Revision)
+		}
+
+		// Convert the KVPair to the K8s resource.
+		resIn, err := c.converter.FromKVPair(kvp)
+		if err != nil {
+			logContext.WithError(err).Info("Error updating resource")
+			return nil, err
+		}
+
+		// Send the update request using the name.
+		name := resIn.GetObjectMeta().GetName()
+		logContext = logContext.WithField("Name", name)
+		logContext.Debug("Update resource by name")
+		err = c.restClient.Put().
+			Resource(c.resource).
+			Body(resIn).
+			Name(name).
+			Do().Into(resOut)
+		if err == nil {
+			// Success.
+			break
+		}
+
+		if i >= 4 {
+			// Too many retries.
+			logContext.WithError(err).Info("Error updating resource")
+			return nil, K8sErrorToCalico(err, kvp.Key)
+		}
+
+		logContext.WithError(err).Warn("Update failed, retrying")
+	}
 
 	// Update the revision information from the response.
 	kvp.Revision = resOut.GetObjectMeta().GetResourceVersion()
-	fmt.Printf("\n\n**** kvp: %v\n\n ***rev: %v", kvp, kvp.Revision)
 	return kvp, nil
 }
 
