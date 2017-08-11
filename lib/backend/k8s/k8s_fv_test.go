@@ -279,31 +279,6 @@ var _ = Describe("Test Syncer API for Kubernetes backend", func() {
 		cfg := capi.KubeConfig{K8sAPIEndpoint: "http://localhost:8080"}
 		c, cb, syncer = CreateClientAndSyncer(cfg)
 
-		// Create a Node in the API to be used by the tests.
-		n := k8sapi.Node{
-			ObjectMeta: metav1.ObjectMeta{Name: "127.0.0.1"},
-			Spec:       k8sapi.NodeSpec{PodCIDR: "10.10.10.0/24"},
-			Status: k8sapi.NodeStatus{
-				Addresses: []k8sapi.NodeAddress{
-					{
-						Type:    k8sapi.NodeInternalIP,
-						Address: "127.0.0.1/32",
-					},
-					{
-						Type:    k8sapi.NodeExternalIP,
-						Address: "5.6.7.8/32",
-					},
-				},
-			},
-		}
-
-		// Delete the node to ensure a clean start.
-		c.clientSet.Nodes().Delete(n.Name, &metav1.DeleteOptions{})
-
-		// Re-create the node.
-		_, err := c.clientSet.Nodes().Create(&n)
-		Expect(err).NotTo(HaveOccurred(), "Failed to create node in k8s API for test")
-
 		// Start the syncer.
 		syncer.Start()
 

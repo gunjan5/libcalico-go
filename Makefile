@@ -78,7 +78,7 @@ run-kubernetes-master: stop-kubernetes-master
 	while ! docker exec st-apiserver kubectl create clusterrolebinding anonymous-admin --clusterrole=cluster-admin --user=system:anonymous; do echo "Trying to create ClusterRoleBinding"; sleep 2; done
 
 	# Create CustomResourceDefinition (CRD) for Calico resources
-	# from the manifest CustomResourceDefinition.yaml
+	# from the manifest crds.yaml 
 	docker run \
 	    --net=host \
 	    --rm \
@@ -86,6 +86,15 @@ run-kubernetes-master: stop-kubernetes-master
 		lachlanevenson/k8s-kubectl:${K8S_VERSION} \
 		--server=http://localhost:8080 \
 		apply -f manifest/test/crds.yaml
+
+	# Create a Node in the API for the tests to use.
+	docker run \
+	    --net=host \
+	    --rm \
+		-v  $(CURDIR):/manifest \
+		lachlanevenson/k8s-kubectl:${K8S_VERSION} \
+		--server=http://localhost:8080 \
+		apply -f manifest/test/mock-node.yaml
 
 ## Stop the local kubernetes master
 stop-kubernetes-master:
