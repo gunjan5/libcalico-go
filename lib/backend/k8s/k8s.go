@@ -26,8 +26,8 @@ import (
 
 	capi "github.com/projectcalico/libcalico-go/lib/api"
 	"github.com/projectcalico/libcalico-go/lib/backend/api"
+	"github.com/projectcalico/libcalico-go/lib/backend/k8s/custom"
 	"github.com/projectcalico/libcalico-go/lib/backend/k8s/resources"
-	"github.com/projectcalico/libcalico-go/lib/backend/k8s/thirdparty"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 	"github.com/projectcalico/libcalico-go/lib/errors"
 	"github.com/projectcalico/libcalico-go/lib/net"
@@ -49,9 +49,8 @@ type KubeClient struct {
 	// Main Kubernetes clients.
 	clientSet *kubernetes.Clientset
 
-	// Client for interacting with ThirdPartyResources.
-	tprClientV1      *rest.RESTClient
-	tprClientV1alpha *rest.RESTClient
+	// Client for interacting with CustomResourceDefinition.
+	crdClientV1 *rest.RESTClient
 
 	disableNodePoll bool
 
@@ -119,46 +118,34 @@ func NewKubeClient(kc *capi.KubeConfig) (*KubeClient, error) {
 	}
 	log.Debugf("Created k8s clientSet: %+v", cs)
 
-	tprClientV1, err := buildTPRClientV1(*config)
+	crdClientV1, err := buildCRDClientV1(*config)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to build V1 TPR client: %s", err)
+		return nil, fmt.Errorf("Failed to build V1 CRD client: %s", err)
 	}
-	tprClientV1alpha, err := buildTPRClientV1alpha(*config)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to build V1alpha TPR client: %s", err)
-	}
+
 	kubeClient := &KubeClient{
-		clientSet:        cs,
-		tprClientV1:      tprClientV1,
-		tprClientV1alpha: tprClientV1alpha,
-		disableNodePoll:  kc.K8sDisableNodePoll,
+		clientSet:       cs,
+		crdClientV1:     crdClientV1,
+		disableNodePoll: kc.K8sDisableNodePoll,
 	}
 
 	// Create the Calico sub-clients.
-	kubeClient.ipPoolClient = resources.NewIPPoolClient(cs, tprClientV1)
-	kubeClient.nodeClient = resources.NewNodeClient(cs, tprClientV1)
-	kubeClient.snpClient = resources.NewSystemNetworkPolicyClient(cs, tprClientV1alpha)
-	kubeClient.globalBgpPeerClient = resources.NewGlobalBGPPeerClient(cs, tprClientV1)
+	kubeClient.ipPoolClient = resources.NewIPPoolClient(cs, crdClientV1)
+	kubeClient.nodeClient = resources.NewNodeClient(cs, crdClientV1)
+	kubeClient.snpClient = resources.NewSystemNetworkPolicyClient(cs, crdClientV1)
+	kubeClient.globalBgpPeerClient = resources.NewGlobalBGPPeerClient(cs, crdClientV1)
 	kubeClient.nodeBgpPeerClient = resources.NewNodeBGPPeerClient(cs)
-	kubeClient.globalBgpConfigClient = resources.NewGlobalBGPConfigClient(cs, tprClientV1)
+	kubeClient.globalBgpConfigClient = resources.NewGlobalBGPConfigClient(cs, crdClientV1)
 	kubeClient.nodeBgpConfigClient = resources.NewNodeBGPConfigClient(cs)
-	kubeClient.globalConfigClient = resources.NewGlobalConfigClient(cs, tprClientV1)
+	kubeClient.globalConfigClient = resources.NewGlobalConfigClient(cs, crdClientV1)
 
 	return kubeClient, nil
 }
 
 func (c *KubeClient) EnsureInitialized() error {
-	// Ensure the necessary ThirdPartyResources exist in the API.
-	log.Info("Ensuring ThirdPartyResources exist")
-	err := c.ensureThirdPartyResources()
-	if err != nil {
-		return fmt.Errorf("Failed to ensure ThirdPartyResources exist: %s", err)
-	}
-	log.Info("ThirdPartyResources exist")
-
 	// Ensure ClusterType is set.
 	log.Info("Ensuring ClusterType is set")
-	err = c.waitForClusterType()
+	err := c.waitForClusterType()
 	if err != nil {
 		return fmt.Errorf("Failed to ensure ClusterType is set: %s", err)
 	}
@@ -169,41 +156,6 @@ func (c *KubeClient) EnsureInitialized() error {
 func (c *KubeClient) EnsureCalicoNodeInitialized(node string) error {
 	log.WithField("Node", node).Info("Ensuring node is initialized")
 	return nil
-}
-
-// ensureThirdPartyResources ensures the necessary thirdparty resources are created
-// and will retry every second for 30 seconds or until they exist.
-func (c *KubeClient) ensureThirdPartyResources() error {
-	return wait.PollImmediate(1*time.Second, 30*time.Second, func() (bool, error) {
-		if err := c.createThirdPartyResources(); err != nil {
-			return false, err
-		}
-		return true, nil
-	})
-}
-
-// createThirdPartyResources creates the necessary third party resources if they
-// do not already exist.
-func (c *KubeClient) createThirdPartyResources() error {
-	// We can check registration of the different custom resources in
-	// parallel.
-	done := make(chan error)
-	go func() { done <- c.ipPoolClient.EnsureInitialized() }()
-	go func() { done <- c.snpClient.EnsureInitialized() }()
-	go func() { done <- c.globalBgpPeerClient.EnsureInitialized() }()
-	go func() { done <- c.globalConfigClient.EnsureInitialized() }()
-	go func() { done <- c.globalBgpConfigClient.EnsureInitialized() }()
-
-	// Wait for all registrations to complete and keep track of the last
-	// error to return.
-	var lastErr error
-	for i := 0; i < 5; i++ {
-		if err := <-done; err != nil {
-			log.WithError(err).Error("Hit error initializing TPR")
-			lastErr = err
-		}
-	}
-	return lastErr
 }
 
 // waitForClusterType polls until GlobalConfig is ready, or until 30 seconds have passed.
@@ -230,17 +182,20 @@ func (c *KubeClient) ensureClusterType() (bool, error) {
 		}
 		// Resource does not exist.
 	}
+	rv := ""
 	if ct != nil {
 		existingValue := ct.Value.(string)
 		if !strings.Contains(existingValue, "KDD") {
 			existingValue = fmt.Sprintf("%s,KDD", existingValue)
 		}
 		value = existingValue
+		rv = ct.Revision.(string)
 	}
 	log.WithField("value", value).Debug("Setting ClusterType")
 	_, err = c.Apply(&model.KVPair{
-		Key:   k,
-		Value: value,
+		Key:      k,
+		Value:    value,
+		Revision: rv,
 	})
 	if err != nil {
 		// Don't return an error, but indicate that we need
@@ -251,11 +206,11 @@ func (c *KubeClient) ensureClusterType() (bool, error) {
 	return true, nil
 }
 
-// buildTPRClientV1 builds a RESTClient configured to interact with Calico ThirdPartyResources
-func buildTPRClientV1(cfg rest.Config) (*rest.RESTClient, error) {
+// buildCRDClientV1 builds a RESTClient configured to interact with Calico CustomResourceDefinitions
+func buildCRDClientV1(cfg rest.Config) (*rest.RESTClient, error) {
 	// Generate config using the base config.
 	cfg.GroupVersion = &schema.GroupVersion{
-		Group:   "projectcalico.org",
+		Group:   "crd.projectcalico.org",
 		Version: "v1",
 	}
 	cfg.APIPath = "/apis"
@@ -272,43 +227,14 @@ func buildTPRClientV1(cfg rest.Config) (*rest.RESTClient, error) {
 		func(scheme *runtime.Scheme) error {
 			scheme.AddKnownTypes(
 				*cfg.GroupVersion,
-				&thirdparty.GlobalConfig{},
-				&thirdparty.GlobalConfigList{},
-				&thirdparty.IpPool{},
-				&thirdparty.IpPoolList{},
-				&thirdparty.GlobalBgpPeer{},
-				&thirdparty.GlobalBgpPeerList{},
-			)
-			return nil
-		})
-	schemeBuilder.AddToScheme(clientapi.Scheme)
-
-	return cli, nil
-}
-
-// buildTPRClientV1alpha builds a RESTClient configured to interact with Calico ThirdPartyResources
-func buildTPRClientV1alpha(cfg rest.Config) (*rest.RESTClient, error) {
-	// Generate config using the base config.
-	cfg.GroupVersion = &schema.GroupVersion{
-		Group:   "alpha.projectcalico.org",
-		Version: "v1",
-	}
-	cfg.APIPath = "/apis"
-	cfg.ContentType = runtime.ContentTypeJSON
-	cfg.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: clientapi.Codecs}
-
-	cli, err := rest.RESTClientFor(&cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	// We also need to register resources.
-	schemeBuilder := runtime.NewSchemeBuilder(
-		func(scheme *runtime.Scheme) error {
-			scheme.AddKnownTypes(
-				*cfg.GroupVersion,
-				&thirdparty.SystemNetworkPolicy{},
-				&thirdparty.SystemNetworkPolicyList{},
+				&custom.GlobalConfig{},
+				&custom.GlobalConfigList{},
+				&custom.IPPool{},
+				&custom.IPPoolList{},
+				&custom.GlobalBGPPeer{},
+				&custom.GlobalBGPPeerList{},
+				&custom.SystemNetworkPolicy{},
+				&custom.SystemNetworkPolicyList{},
 			)
 			return nil
 		})
@@ -725,7 +651,7 @@ func (c *KubeClient) getPolicy(k model.PolicyKey) (*model.KVPair, error) {
 		}
 		return c.converter.networkPolicyToPolicy(&networkPolicy)
 	} else if strings.HasPrefix(k.Name, resources.SystemNetworkPolicyNamePrefix) {
-		// This is backed by a System Network Policy TPR.
+		// This is backed by a System Network Policy CRD.
 		return c.snpClient.Get(k)
 	} else {
 		// Received a Get() for a Policy that doesn't exist.

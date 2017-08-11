@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/projectcalico/libcalico-go/lib/backend/k8s/thirdparty"
+	"github.com/projectcalico/libcalico-go/lib/backend/k8s/custom"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,19 +28,19 @@ import (
 )
 
 const (
-	GlobalBgpConfigResourceName = "GlobalBgpConfigs"
-	GlobalBgpConfigTPRName      = "global-bgp-config.projectcalico.org"
+	GlobalBgpConfigResourceName = "GlobalBGPConfigs"
+	GlobalBgpConfigCRDName      = "globalbgpconfigs.projectcalico.org"
 )
 
 func NewGlobalBGPConfigClient(c *kubernetes.Clientset, r *rest.RESTClient) K8sResourceClient {
 	return &customK8sResourceClient{
 		clientSet:       c,
 		restClient:      r,
-		name:            GlobalBgpConfigTPRName,
+		name:            GlobalBgpConfigCRDName,
 		resource:        GlobalBgpConfigResourceName,
 		description:     "Calico Global BGP Configuration",
-		k8sResourceType: reflect.TypeOf(thirdparty.GlobalBgpConfig{}),
-		k8sListType:     reflect.TypeOf(thirdparty.GlobalBgpConfigList{}),
+		k8sResourceType: reflect.TypeOf(custom.GlobalBgpConfig{}),
+		k8sListType:     reflect.TypeOf(custom.GlobalBgpConfigList{}),
 		converter:       GlobalBgpConfigConverter{},
 	}
 }
@@ -65,7 +65,7 @@ func (_ GlobalBgpConfigConverter) NameToKey(name string) (model.Key, error) {
 }
 
 func (c GlobalBgpConfigConverter) ToKVPair(r CustomK8sResource) (*model.KVPair, error) {
-	t := r.(*thirdparty.GlobalBgpConfig)
+	t := r.(*custom.GlobalBgpConfig)
 	return &model.KVPair{
 		Key: model.GlobalBGPConfigKey{
 			Name: t.Spec.Name,
@@ -80,17 +80,19 @@ func (c GlobalBgpConfigConverter) FromKVPair(kvp *model.KVPair) (CustomK8sResour
 	if err != nil {
 		return nil, err
 	}
-	tpr := thirdparty.GlobalBgpConfig{
-		Metadata: metav1.ObjectMeta{
-			Name: name,
+	crd := custom.GlobalBgpConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "GlobalBgpConfig",
+			APIVersion: "crd.projectcalico.org/v1",
 		},
-		Spec: thirdparty.GlobalBgpConfigSpec{
+		Metadata: metav1.ObjectMeta{Name: name},
+		Spec: custom.GlobalBgpConfigSpec{
 			Name:  kvp.Key.(model.GlobalBGPConfigKey).Name,
 			Value: kvp.Value.(string),
 		},
 	}
 	if kvp.Revision != nil {
-		tpr.Metadata.ResourceVersion = kvp.Revision.(string)
+		crd.Metadata.ResourceVersion = kvp.Revision.(string)
 	}
-	return &tpr, nil
+	return &crd, nil
 }

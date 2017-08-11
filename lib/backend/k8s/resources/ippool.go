@@ -15,10 +15,10 @@
 package resources
 
 import (
-	"encoding/json"
 	"reflect"
 
-	"github.com/projectcalico/libcalico-go/lib/backend/k8s/thirdparty"
+	"github.com/projectcalico/libcalico-go/lib/api"
+	"github.com/projectcalico/libcalico-go/lib/backend/k8s/custom"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -26,19 +26,19 @@ import (
 )
 
 const (
-	IPPoolResourceName = "ippools"
-	IPPoolTPRName      = "ip-pool.projectcalico.org"
+	IPPoolResourceName = "IPPools"
+	IPPoolCRDName      = "ippools.crd.projectcalico.org"
 )
 
 func NewIPPoolClient(c *kubernetes.Clientset, r *rest.RESTClient) K8sResourceClient {
 	return &customK8sResourceClient{
 		clientSet:       c,
 		restClient:      r,
-		name:            IPPoolTPRName,
+		name:            IPPoolCRDName,
 		resource:        IPPoolResourceName,
 		description:     "Calico IP Pools",
-		k8sResourceType: reflect.TypeOf(thirdparty.IpPool{}),
-		k8sListType:     reflect.TypeOf(thirdparty.IpPoolList{}),
+		k8sResourceType: reflect.TypeOf(custom.IPPool{}),
+		k8sListType:     reflect.TypeOf(custom.IPPoolList{}),
 		converter:       IPPoolConverter{},
 	}
 }
@@ -68,42 +68,57 @@ func (_ IPPoolConverter) NameToKey(name string) (model.Key, error) {
 	}, nil
 }
 
-func (_ IPPoolConverter) ToKVPair(r CustomK8sResource) (*model.KVPair, error) {
-	t := r.(*thirdparty.IpPool)
-	v := model.IPPool{}
+func (i IPPoolConverter) ToKVPair(r CustomK8sResource) (*model.KVPair, error) {
+	t := r.(*custom.IPPool)
 
-	_, err := ResourceNameToIPNet(t.Metadata.Name)
+	// Convert k8s resource name format (192-168-0-1-24) to a CIDR.
+	cidr, err := ResourceNameToIPNet(t.Metadata.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal([]byte(t.Spec.Value), &v)
-	if err != nil {
-		return nil, err
+	ipipInterface := ""
+	if t.Spec.IPIP != nil {
+		if t.Spec.IPIP.Enabled {
+			ipipInterface = "tunl0"
+		} else {
+			ipipInterface = ""
+		}
 	}
+
 	return &model.KVPair{
-		Key:      model.IPPoolKey{CIDR: v.CIDR},
-		Value:    &v,
+		Key: model.IPPoolKey{CIDR: *cidr},
+		Value: &model.IPPool{
+			CIDR:          *cidr,
+			IPIPInterface: ipipInterface,
+			IPIPMode:      t.Spec.IPIP.Mode,
+			Masquerade:    t.Spec.NATOutgoing,
+			IPAM:          !t.Spec.Disabled,
+			Disabled:      t.Spec.Disabled,
+		},
 		Revision: t.Metadata.ResourceVersion,
 	}, nil
 }
 
 func (_ IPPoolConverter) FromKVPair(kvp *model.KVPair) (CustomK8sResource, error) {
-	v, err := json.Marshal(kvp.Value.(*model.IPPool))
-	if err != nil {
-		return nil, err
-	}
+	val := kvp.Value.(*model.IPPool)
 
-	tpr := thirdparty.IpPool{
+	crd := custom.IPPool{
 		Metadata: metav1.ObjectMeta{
 			Name: IPNetToResourceName(kvp.Key.(model.IPPoolKey).CIDR),
 		},
-		Spec: thirdparty.IpPoolSpec{
-			Value: string(v),
+		Spec: api.IPPoolSpec{
+			IPIP: &api.IPIPConfiguration{
+				Enabled: val.IPIPInterface != "",
+				Mode:    val.IPIPMode,
+			},
+			NATOutgoing: val.Masquerade,
+			Disabled:    val.Disabled,
 		},
 	}
+
 	if kvp.Revision != nil {
-		tpr.Metadata.ResourceVersion = kvp.Revision.(string)
+		crd.Metadata.ResourceVersion = kvp.Revision.(string)
 	}
-	return &tpr, nil
+	return &crd, nil
 }

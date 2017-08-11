@@ -16,7 +16,7 @@ package resources_test
 
 import (
 	"github.com/projectcalico/libcalico-go/lib/backend/k8s/resources"
-	"github.com/projectcalico/libcalico-go/lib/backend/k8s/thirdparty"
+	"github.com/projectcalico/libcalico-go/lib/backend/k8s/custom"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,12 +48,12 @@ var _ = Describe("Global Felix config conversion methods", func() {
 		Value:    value1,
 		Revision: "rv",
 	}
-	res1 := &thirdparty.GlobalConfig{
+	res1 := &custom.GlobalConfig{
 		Metadata: metav1.ObjectMeta{
 			Name:            name1,
 			ResourceVersion: "rv",
 		},
-		Spec: thirdparty.GlobalConfigSpec{
+		Spec: custom.GlobalConfigSpec{
 			Name:  key1.Name,
 			Value: value1,
 		},
@@ -83,8 +83,8 @@ var _ = Describe("Global Felix config conversion methods", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(r.GetObjectMeta().GetName()).To(Equal(res1.Metadata.Name))
 		Expect(r.GetObjectMeta().GetResourceVersion()).To(Equal(res1.Metadata.ResourceVersion))
-		Expect(r).To(BeAssignableToTypeOf(&thirdparty.GlobalConfig{}))
-		Expect(r.(*thirdparty.GlobalConfig).Spec).To(Equal(res1.Spec))
+		Expect(r).To(BeAssignableToTypeOf(&custom.GlobalConfig{}))
+		Expect(r.(*custom.GlobalConfig).Spec).To(Equal(res1.Spec))
 	})
 
 	It("should convert between a Kuberenetes resource and the equivalent KVPair", func() {

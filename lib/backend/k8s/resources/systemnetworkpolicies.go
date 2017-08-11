@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/projectcalico/libcalico-go/lib/api"
-	"github.com/projectcalico/libcalico-go/lib/backend/k8s/thirdparty"
+	"github.com/projectcalico/libcalico-go/lib/backend/k8s/custom"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 	"github.com/projectcalico/libcalico-go/lib/converter"
 
@@ -30,20 +30,20 @@ import (
 )
 
 const (
-	SystemNetworkPolicyResourceName = "systemnetworkpolicies"
-	SystemNetworkPolicyTPRName      = "system-network-policy.alpha.projectcalico.org"
-	SystemNetworkPolicyNamePrefix   = "snp.projectcalico.org/"
+	SystemNetworkPolicyResourceName = "SystemNetworkPolicies"
+	SystemNetworkPolicyCRDName      = "systemnetworkpolicies.crd.projectcalico.org"
+	SystemNetworkPolicyNamePrefix   = "crd.projectcalico.org/"
 )
 
 func NewSystemNetworkPolicyClient(c *kubernetes.Clientset, r *rest.RESTClient) K8sResourceClient {
 	return &customK8sResourceClient{
 		clientSet:       c,
 		restClient:      r,
-		name:            SystemNetworkPolicyTPRName,
+		name:            SystemNetworkPolicyCRDName,
 		resource:        SystemNetworkPolicyResourceName,
 		description:     "Calico System Network Policies",
-		k8sResourceType: reflect.TypeOf(thirdparty.SystemNetworkPolicy{}),
-		k8sListType:     reflect.TypeOf(thirdparty.SystemNetworkPolicyList{}),
+		k8sResourceType: reflect.TypeOf(custom.SystemNetworkPolicy{}),
+		k8sListType:     reflect.TypeOf(custom.SystemNetworkPolicyList{}),
 		converter:       SystemNetworkPolicyConverter{},
 	}
 }
@@ -83,7 +83,7 @@ func (_ SystemNetworkPolicyConverter) NameToKey(name string) (model.Key, error) 
 func (c SystemNetworkPolicyConverter) ToKVPair(r CustomK8sResource) (*model.KVPair, error) {
 	// Since we are using the Calico API Spec definition to store the Calico
 	// Policy, use the client conversion helper to convert between KV and API.
-	t := r.(*thirdparty.SystemNetworkPolicy)
+	t := r.(*custom.SystemNetworkPolicy)
 	policyName := fmt.Sprintf("%s%s", SystemNetworkPolicyNamePrefix, t.Metadata.Name)
 	policy := api.Policy{
 		Metadata: api.PolicyMetadata{
@@ -103,19 +103,19 @@ func (c SystemNetworkPolicyConverter) FromKVPair(kvp *model.KVPair) (CustomK8sRe
 		return nil, err
 	}
 
-	tprName, err := c.KeyToName(kvp.Key)
+	crdName, err := c.KeyToName(kvp.Key)
 	if err != nil {
 		return nil, err
 	}
 
-	tpr := thirdparty.SystemNetworkPolicy{
+	crd := custom.SystemNetworkPolicy{
 		Metadata: metav1.ObjectMeta{
-			Name: tprName,
+			Name: crdName,
 		},
 		Spec: r.(*api.Policy).Spec,
 	}
 	if kvp.Revision != nil {
-		tpr.Metadata.ResourceVersion = kvp.Revision.(string)
+		crd.Metadata.ResourceVersion = kvp.Revision.(string)
 	}
-	return &tpr, nil
+	return &crd, nil
 }

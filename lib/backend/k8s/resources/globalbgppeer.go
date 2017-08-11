@@ -18,7 +18,7 @@ import (
 	"reflect"
 
 	"github.com/projectcalico/libcalico-go/lib/api"
-	"github.com/projectcalico/libcalico-go/lib/backend/k8s/thirdparty"
+	"github.com/projectcalico/libcalico-go/lib/backend/k8s/custom"
 	"github.com/projectcalico/libcalico-go/lib/backend/model"
 	"github.com/projectcalico/libcalico-go/lib/converter"
 	"github.com/projectcalico/libcalico-go/lib/scope"
@@ -29,19 +29,19 @@ import (
 )
 
 const (
-	GlobalBGPPeerResourceName = "globalbgppeers"
-	GlobalBGPPeerTPRName      = "global-bgp-peer.projectcalico.org"
+	GlobalBGPPeerResourceName = "GlobalBGPPeers"
+	GlobalBGPPeerCRDName      = "globalbgppeers.crd.projectcalico.org"
 )
 
 func NewGlobalBGPPeerClient(c *kubernetes.Clientset, r *rest.RESTClient) K8sResourceClient {
 	return &customK8sResourceClient{
 		clientSet:       c,
 		restClient:      r,
-		name:            GlobalBGPPeerTPRName,
+		name:            GlobalBGPPeerCRDName,
 		resource:        GlobalBGPPeerResourceName,
 		description:     "Calico Global BGP Peers",
-		k8sResourceType: reflect.TypeOf(thirdparty.GlobalBgpPeer{}),
-		k8sListType:     reflect.TypeOf(thirdparty.GlobalBgpPeerList{}),
+		k8sResourceType: reflect.TypeOf(custom.GlobalBGPPeer{}),
+		k8sListType:     reflect.TypeOf(custom.GlobalBGPPeerList{}),
 		converter:       GlobalBGPPeerConverter{},
 	}
 }
@@ -83,7 +83,7 @@ func (_ GlobalBGPPeerConverter) NameToKey(name string) (model.Key, error) {
 func (c GlobalBGPPeerConverter) ToKVPair(r CustomK8sResource) (*model.KVPair, error) {
 	// Since we are using the Calico API Spec definition to store the Calico
 	// BGP Peer, use the client conversion helper to convert between KV and API.
-	t := r.(*thirdparty.GlobalBgpPeer)
+	t := r.(*custom.GlobalBGPPeer)
 	ip, err := ResourceNameToIP(t.Metadata.Name)
 	if err != nil {
 		return nil, err
@@ -111,19 +111,19 @@ func (c GlobalBGPPeerConverter) FromKVPair(kvp *model.KVPair) (CustomK8sResource
 		return nil, err
 	}
 
-	tprName, err := c.KeyToName(kvp.Key)
+	crdName, err := c.KeyToName(kvp.Key)
 	if err != nil {
 		return nil, err
 	}
 
-	tpr := thirdparty.GlobalBgpPeer{
+	crd := custom.GlobalBGPPeer{
 		Metadata: metav1.ObjectMeta{
-			Name: tprName,
+			Name: crdName,
 		},
 		Spec: r.(*api.BGPPeer).Spec,
 	}
 	if kvp.Revision != nil {
-		tpr.Metadata.ResourceVersion = kvp.Revision.(string)
+		crd.Metadata.ResourceVersion = kvp.Revision.(string)
 	}
-	return &tpr, nil
+	return &crd, nil
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package thirdparty
+package custom
 
 import (
 	"encoding/json"
@@ -21,42 +21,43 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-type GlobalBgpConfigSpec struct {
+type GlobalConfig struct {
+	metav1.TypeMeta `json:",inline"`
+	Metadata        metav1.ObjectMeta `json:"metadata"`
+	Spec            GlobalConfigSpec  `json:"spec"`
+}
+
+type GlobalConfigSpec struct {
+	// The reason we have Name field in Spec is because k8s metadata
+	// name field makes the string lowercase, so Name field in Spec is
+	// to preserve the casing.
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
-type GlobalBgpConfig struct {
-	metav1.TypeMeta `json:",inline"`
-	Metadata        metav1.ObjectMeta `json:"metadata"`
-
-	Spec GlobalBgpConfigSpec `json:"spec"`
-}
-
-type GlobalBgpConfigList struct {
+type GlobalConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	Metadata        metav1.ListMeta `json:"metadata"`
-
-	Items []GlobalBgpConfig `json:"items"`
+	Items           []GlobalConfig  `json:"items"`
 }
 
 // Required to satisfy Object interface
-func (e *GlobalBgpConfig) GetObjectKind() schema.ObjectKind {
+func (e *GlobalConfig) GetObjectKind() schema.ObjectKind {
 	return &e.TypeMeta
 }
 
 // Required to satisfy ObjectMetaAccessor interface
-func (e *GlobalBgpConfig) GetObjectMeta() metav1.Object {
+func (e *GlobalConfig) GetObjectMeta() metav1.Object {
 	return &e.Metadata
 }
 
 // Required to satisfy Object interface
-func (el *GlobalBgpConfigList) GetObjectKind() schema.ObjectKind {
+func (el *GlobalConfigList) GetObjectKind() schema.ObjectKind {
 	return &el.TypeMeta
 }
 
 // Required to satisfy ListMetaAccessor interface
-func (el *GlobalBgpConfigList) GetListMeta() metav1.List {
+func (el *GlobalConfigList) GetListMeta() metav1.List {
 	return &el.Metadata
 }
 
@@ -64,27 +65,27 @@ func (el *GlobalBgpConfigList) GetListMeta() metav1.List {
 // resources and ugorji. If/when these issues are resolved, the code below
 // should no longer be required.
 
-type GlobalBgpConfigListCopy GlobalBgpConfigList
-type GlobalBgpConfigCopy GlobalBgpConfig
+type GlobalConfigListCopy GlobalConfigList
+type GlobalConfigCopy GlobalConfig
 
-func (g *GlobalBgpConfig) UnmarshalJSON(data []byte) error {
-	tmp := GlobalBgpConfigCopy{}
+func (g *GlobalConfig) UnmarshalJSON(data []byte) error {
+	tmp := GlobalConfigCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := GlobalBgpConfig(tmp)
+	tmp2 := GlobalConfig(tmp)
 	*g = tmp2
 	return nil
 }
 
-func (l *GlobalBgpConfigList) UnmarshalJSON(data []byte) error {
-	tmp := GlobalBgpConfigListCopy{}
+func (l *GlobalConfigList) UnmarshalJSON(data []byte) error {
+	tmp := GlobalConfigListCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := GlobalBgpConfigList(tmp)
+	tmp2 := GlobalConfigList(tmp)
 	*l = tmp2
 	return nil
 }

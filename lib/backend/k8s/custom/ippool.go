@@ -12,51 +12,47 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package thirdparty
+package custom
 
 import (
 	"encoding/json"
 
+	"github.com/projectcalico/libcalico-go/lib/api"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-type GlobalConfigSpec struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
-type GlobalConfig struct {
+// IPPool is the CustomResourceDefinition definition of an IPPool in the Kubernetes API.
+type IPPool struct {
 	metav1.TypeMeta `json:",inline"`
 	Metadata        metav1.ObjectMeta `json:"metadata"`
-
-	Spec GlobalConfigSpec `json:"spec"`
+	Spec            api.IPPoolSpec    `json:"spec"`
 }
 
-type GlobalConfigList struct {
+// IPPoolList is a list of IPPool resources.
+type IPPoolList struct {
 	metav1.TypeMeta `json:",inline"`
 	Metadata        metav1.ListMeta `json:"metadata"`
-
-	Items []GlobalConfig `json:"items"`
+	Items           []IPPool        `json:"items"`
 }
 
-// Required to satisfy Object interface
-func (e *GlobalConfig) GetObjectKind() schema.ObjectKind {
+// GetObjectKind returns the kind of this object.  Required to satisfy Object interface
+func (e *IPPool) GetObjectKind() schema.ObjectKind {
 	return &e.TypeMeta
 }
 
-// Required to satisfy ObjectMetaAccessor interface
-func (e *GlobalConfig) GetObjectMeta() metav1.Object {
+// GetOjbectMeta returns the object metadata of this object. Required to satisfy ObjectMetaAccessor interface
+func (e *IPPool) GetObjectMeta() metav1.Object {
 	return &e.Metadata
 }
 
-// Required to satisfy Object interface
-func (el *GlobalConfigList) GetObjectKind() schema.ObjectKind {
+// GetObjectKind returns the kind of this object. Required to satisfy Object interface
+func (el *IPPoolList) GetObjectKind() schema.ObjectKind {
 	return &el.TypeMeta
 }
 
-// Required to satisfy ListMetaAccessor interface
-func (el *GlobalConfigList) GetListMeta() metav1.List {
+// GetListMeta returns the list metadata of this object. Required to satisfy ListMetaAccessor interface
+func (el *IPPoolList) GetListMeta() metav1.List {
 	return &el.Metadata
 }
 
@@ -64,27 +60,27 @@ func (el *GlobalConfigList) GetListMeta() metav1.List {
 // resources and ugorji. If/when these issues are resolved, the code below
 // should no longer be required.
 
-type GlobalConfigListCopy GlobalConfigList
-type GlobalConfigCopy GlobalConfig
+type IPPoolListCopy IPPoolList
+type IPPoolCopy IPPool
 
-func (g *GlobalConfig) UnmarshalJSON(data []byte) error {
-	tmp := GlobalConfigCopy{}
+func (g *IPPool) UnmarshalJSON(data []byte) error {
+	tmp := IPPoolCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := GlobalConfig(tmp)
+	tmp2 := IPPool(tmp)
 	*g = tmp2
 	return nil
 }
 
-func (l *GlobalConfigList) UnmarshalJSON(data []byte) error {
-	tmp := GlobalConfigListCopy{}
+func (l *IPPoolList) UnmarshalJSON(data []byte) error {
+	tmp := IPPoolListCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := GlobalConfigList(tmp)
+	tmp2 := IPPoolList(tmp)
 	*l = tmp2
 	return nil
 }
