@@ -173,7 +173,7 @@ func (c cb) ExpectExists(updates []api.Update) {
 		})
 
 		// Expect the key to have existed.
-		// Expect(matches).To(Equal(true), fmt.Sprintf("Expected update not found: %s", update.Key))
+		Expect(matches).To(Equal(true), fmt.Sprintf("Expected update not found: %s", update.Key))
 	}
 }
 
