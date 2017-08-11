@@ -81,9 +81,11 @@ func (c GlobalBgpConfigConverter) FromKVPair(kvp *model.KVPair) (CustomK8sResour
 		return nil, err
 	}
 	crd := custom.GlobalBgpConfig{
-		Metadata: metav1.ObjectMeta{
-			Name: name,
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "GlobalBgpConfig",
+			APIVersion: "crd.projectcalico.org/v1",
 		},
+		Metadata: metav1.ObjectMeta{Name: name},
 		Spec: custom.GlobalBgpConfigSpec{
 			Name:  kvp.Key.(model.GlobalBGPConfigKey).Name,
 			Value: kvp.Value.(string),
