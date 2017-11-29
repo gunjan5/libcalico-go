@@ -71,6 +71,22 @@ func ProtocolFromStringV1(p string) Protocol {
 	)
 }
 
+func ProtocolV3FromProtocolV1(p Protocol) Protocol {
+	if p.Type == NumOrStringNum {
+		return p
+	}
+
+	for _, n := range allProtocolNames {
+		if strings.ToLower(n) == strings.ToLower(p.StrVal) {
+			return Protocol(
+				Uint8OrString{Type: NumOrStringString, StrVal: n},
+			)
+		}
+	}
+
+	return p
+}
+
 // UnmarshalJSON implements the json.Unmarshaller interface.
 func (p *Protocol) UnmarshalJSON(b []byte) error {
 	return (*Uint8OrString)(p).UnmarshalJSON(b)
